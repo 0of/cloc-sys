@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="105.0" height="20">
+    <g shape-rendering="crispEdges">
+        <rect width="77.0" height="20" fill="#555"/>
+        <rect x="77.0" width="28.0" height="20" fill="#4c1"/>
+    </g>
+    <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+        <text x="38.5" y="14">code of lines:</text>
+        <text x="90.0" y="14">2394</text>
+    </g>
+</svg>
