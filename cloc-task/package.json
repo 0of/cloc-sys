@@ -1,0 +1,26 @@
+{
+  "name": "cloc-task",
+  "version": "0.1.0",
+  "description": "",
+  "author": "0of",
+  "license": "MIT",
+  "homepage": "",
+  "main": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "files": [
+    "lib",
+    "src",
+    "index.js"
+  ],
+  "keywords": [
+    "cloc",
+    "badge"
+  ],
+  "dependencies": {
+    "js-yaml": "latest",
+    "request": "latest"
+  }
+}

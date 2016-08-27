@@ -1,0 +1,8 @@
+
+(execute-reql! (r/db-create "cloc"))
+
+(execute-reql! (r/table-create (r/db "cloc") "active_tasks"))
+
+(execute-reql! (r/table-create (r/db "cloc") "task_records"))
+
+(execute-reql! (r/table-create (r/db "cloc") "result"))

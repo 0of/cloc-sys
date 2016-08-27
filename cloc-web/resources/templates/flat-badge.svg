@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="{{badge_width}}" height="20">
+  <g shape-rendering="crispEdges">
+    <rect width="{{widths.0}}" height="20" fill="{{colors.0}}"/>
+    <rect x="{{widths.0}}" width="{{widths.1}}" height="20" fill="{{colors.1}}"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+    <text x="{{offset.0}}" y="14">{{text.0}}</text>
+    <text x="{{offset.1}}" y="14">{{text.1}}</text>
+  </g>
+</svg>
