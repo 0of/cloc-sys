@@ -11,4 +11,6 @@
                  [com.apa512/rethinkdb "0.15.24"]]
   :main ^:skip-aot cloc-reporter.core
   :profiles {:uberjar {:aot :all}
-             :dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]]}})
+             :dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]
+                                  [cheshire "5.6.3"]
+                                  [clj-http "3.2.0"]]}})

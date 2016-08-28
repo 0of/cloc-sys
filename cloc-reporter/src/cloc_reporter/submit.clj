@@ -19,12 +19,12 @@
 (defn- update-task-state
   [conn task-id state]
   (-> (r/table "active_tasks")
-      (r/get task-id)
+      (r/get 1)
       (r/update (r/fn [task]
                   {:state
                     (r/branch (r/eq "running" (r/get-field task :state))
                       state
-                      (r/get-field task :state))}))
+                     (r/get-field task :state))}))
       (r/run conn)))
 
 (defn- save
@@ -51,7 +51,9 @@
     (s/validate CountResult body)
 
     (let [{error_count :errors error :first_error} (save task-id body)]
-      (if (> error_count 0)
+      (if (and 
+            (integer? error_count)
+            (> error_count 0))
         {:status 400 :body error}
         ""))))
 
