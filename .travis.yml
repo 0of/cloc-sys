@@ -8,3 +8,6 @@ services:
 
 addons:
   rethinkdb: '2.3.4'
+
+before_script:
+	- lein migrate
