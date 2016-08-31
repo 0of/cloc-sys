@@ -10,10 +10,7 @@
    :strategy strategy/apply-new})
 
 (defn migrate []
- (try 
-  (repl/migrate (load-config))
-  (catch Exception e
-   (prn e))))   
+  (repl/migrate (load-config)))
 
 (defn rollback []
   (repl/rollback (load-config)))

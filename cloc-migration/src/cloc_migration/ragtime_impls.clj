@@ -67,8 +67,10 @@
   [db-conn migrations-db migrations-table]
   (-> (r/db migrations-db)
       (r/table migrations-table)
+      (r/pluck :id)
       (r/order-by "created_at")
-      (r/run db-conn)))
+      (r/run db-conn)
+      ((partial map :id))))
 
 (defrecord ReQLDatabase [db-spec migrations-db migrations-table]
   p/DataStore
