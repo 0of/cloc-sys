@@ -42,8 +42,9 @@
             new-id (car/wcar redis-spec (car/incr "job_ids"))]
 
         ;; queue task
-        (car/wcar redis-spec (car/zadd "scheduling" new-id target)))
+        (car/wcar redis-spec (car/zadd "scheduling" new-id target))
         ;; notify
+        (car/wcar redis-spec (car/publish "task-queued")))
 
       {:status 400 :body "invalid event"})))
 
