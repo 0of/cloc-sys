@@ -3,10 +3,12 @@
             [compojure.core :refer :all]
             [ring.middleware.params :as params]
             [clojure.string :refer [split]]
-            [taoensso.carmine :as car :refer [wcar]])
-  (:import javax.crypto.Mac
-           javax.crypto.spec.SecretKeySpec
-           org.apache.commons.codec.binary.Hex)
+            [taoensso.carmine :as car :refer [wcar]]
+            [byte-streams :refer [to-byte-array]]
+            [cheshire.core :refer [parse-string]])
+  (:import [javax.crypto Mac]
+           [javax.crypto.spec SecretKeySpec]
+           [org.apache.commons.codec.binary Hex])
   (:gen-class))
 
 (def ^:const secret "cloc-webhook")
@@ -15,7 +17,7 @@
                         :spec {:host "127.0.0.1"
                                :port 6379}}})
 
-(defn- hmac
+(defn hmac
   [data]
   (let [algo "HmacSHA1"
         signing-key (SecretKeySpec. (.getBytes secret) algo)
@@ -25,8 +27,8 @@
 
 (defn on-commit-pushed
   [{redis-spec :redis-spec} req]
-  (let [event-type (get-in req [:headers "X-GitHub-Event"])
-        sig (get-in req [:headers "X-Hub-Signature"])
+  (let [event-type (get-in req [:headers "x-github-event"])
+        sig (get-in req [:headers "x-hub-signature"])
         body (:body req)
         bytes (to-byte-array body)]
     (if (and (= event-type "push")
@@ -38,18 +40,20 @@
             branch (or (last (split ref #"/" 3))
                        (get-in body [:repository :default_branch])
                        "master")
-            target (format "%s/%s" (get-in body [:repository :full_name] branch))
+            target (format "%s/%s" (get-in body [:repository :full_name]) branch)
             new-id (car/wcar redis-spec (car/incr "job_ids"))]
 
         ;; queue task
         (car/wcar redis-spec (car/zadd "scheduling" new-id target))
         ;; notify
-        (car/wcar redis-spec (car/publish "task-queued")))
+        (car/wcar redis-spec (car/publish "task-queued" ""))
+
+        {:status 200 :body ""})
 
       {:status 400 :body "invalid event"})))
 
 (defroutes app
-  (GET "/repo/hooks" req (on-commit-pushed spec req)))  
+  (POST "/repo/hooks" req (on-commit-pushed spec req)))  
 
 (defn -main
   [& args]
