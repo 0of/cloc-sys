@@ -9,9 +9,11 @@
                  [ring/ring-json "0.4.0"]
                  [compojure "1.5.1"]
                  [com.taoensso/carmine "2.13.1"]
-                 [byte-streams "0.2.2"]]
+                 [byte-streams "0.2.2"]
+                 [cheshire "5.6.3"]]
   :main ^:skip-aot cloc-webhook.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
-             :dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]]}})
+             :dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]
+                                  [clj-http "3.2.0"]]}})
 
