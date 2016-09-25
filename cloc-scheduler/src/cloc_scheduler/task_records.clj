@@ -6,8 +6,11 @@
 
 (defn exists?
   [db id]
-  (let [t table]
-    (db-run db t (r/get id))))
+  (> (db-run db table (r/get id) r/count)) 0)
+
+(defn get-by-id
+  [db id]
+  (db-run db table (r/get id)))
 
 (defn add
   [db body]
