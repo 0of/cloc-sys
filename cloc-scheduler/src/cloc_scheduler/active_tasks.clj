@@ -102,10 +102,10 @@
         (docker/remove-container! docker-client container-id)
 
          ;; add to record
-        (records/add {:id id
-                      :target (:target task)
-                      :recorded_at (r/now)
-                      :result "cancelled"})
+        (records/add db-conn {:id id
+                              :target (:target task)
+                              :recorded_at (r/now)
+                              :result "cancelled"})
 
         [:ok (keyword state)]
 

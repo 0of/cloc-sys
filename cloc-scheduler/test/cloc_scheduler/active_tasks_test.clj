@@ -3,6 +3,7 @@
             [cloc-scheduler.active-tasks :refer :all]
             [rethinkdb.query :as r]
             [docker-client.core :as docker]
+            [cloc-scheduler.task-records :as records]
             [clojure.core.async :refer [poll!]]))       
 
 (def spec (atom nil))
@@ -17,7 +18,9 @@
                  :docker-client nil})
 
    (with-redefs [docker/start-container! (fn [& args] args)
-                 docker/create-container! (fn [& args] args)]         
+                 docker/create-container! (fn [& args] args)
+                 docker/stop-container! (fn [& args] args)
+                 docker/remove-container! (fn [& args] args)]
      (f))))
 
 (defn setup-each
@@ -136,6 +139,26 @@
       (-> (r/table table)
           (r/get 1)                   
           (r/update {:state "finished"})
-          (r/run (:db-conn @spec))))
+          (r/run (:db-conn @spec)))
+
+      (Thread/sleep 1000))
 
     (is (some? (poll! chan)))))
+
+(deftest test-cancel-non-existent-task
+  (is
+    (= [:error :not-found]
+       (try-cancel-task @spec 1))))  
+
+(deftest test-cancel-running-task
+  (scenario "setup running task"
+    (-> (r/table table)
+        (r/insert {:id 1
+                   :target "target"
+                   :container_id ""
+                   :state "running"})
+        (r/run (:db-conn @spec))))
+
+  (are [l r] (= l r)
+    [:ok :running] (try-cancel-task @spec 1)
+    "cancelled" (:result (records/get-by-id (:db-conn @spec) 1))))
