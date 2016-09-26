@@ -139,7 +139,9 @@
       (-> (r/table table)
           (r/get 1)                   
           (r/update {:state "finished"})
-          (r/run (:db-conn @spec))))
+          (r/run (:db-conn @spec)))
+
+      (Thread/sleep 1000))
 
     (is (some? (poll! chan)))))
 
