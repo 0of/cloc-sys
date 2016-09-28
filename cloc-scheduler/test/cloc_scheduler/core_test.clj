@@ -18,7 +18,9 @@
                :docker-client nil})
 
  (with-redefs [docker/start-container! (fn [& args] args)
-               docker/create-container! (fn [& args] args)] 
+               docker/create-container! (fn [& args] args) 
+               docker/stop-container! (fn [& args] args)
+               docker/remove-container! (fn [& args] args)]
    (f)))
 
 (defn setup-each
@@ -129,3 +131,52 @@
         true (check-and-schedule-tasks scheduling-flag task-chan @spec counter) 
         1 @counter
         1 (.get scheduling-flag)))))  
+
+(deftest test-cancel-scheduling-task
+  (let [counter (atom 0)
+        scheduling-flag (AtomicInteger. 0)
+        cancellation-flag (AtomicInteger. 1)]
+    (scenario "queue task request with task-id 1"
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target"))  
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 2 "target-2"))
+      (car/wcar (:redis-spec spec) (car/sadd "cancellations" 2)))
+
+    (with-redefs [active-tasks/try-cancel-task (fn [& args] [:error :not-found])]
+      (are [l r] (= l r)
+          ;; processed even not start a task   
+          true ( #'cloc-scheduler.core/check-and-cancel-task cancellation-flag scheduling-flag  @spec counter) 
+          0 @counter
+          0 (.get cancellation-flag)  
+          1 (.get scheduling-flag)))))
+
+(deftest test-cancel-pending-task
+  (let [counter (atom 0)
+        scheduling-flag (AtomicInteger. 0)
+        cancellation-flag (AtomicInteger. 1)]
+    (scenario "queue task request with task-id 1"
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target"))  
+      (car/wcar (:redis-spec spec) (car/sadd "cancellations" 2)))
+
+    (with-redefs [active-tasks/try-cancel-task (fn [& args] [:ok :pending])]
+      (are [l r] (= l r)
+          ;; processed even not start a task   
+          true ( #'cloc-scheduler.core/check-and-cancel-task cancellation-flag scheduling-flag  @spec counter) 
+          0 @counter
+          0 (.get cancellation-flag)  
+          1 (.get scheduling-flag)))))
+
+(deftest test-cancel-running-task
+  (let [counter (atom 1)
+        scheduling-flag (AtomicInteger. 0)
+        cancellation-flag (AtomicInteger. 1)]
+    (scenario "queue task request with task-id 1"
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target"))  
+      (car/wcar (:redis-spec spec) (car/sadd "cancellations" 2)))
+
+    (with-redefs [active-tasks/try-cancel-task (fn [& args] [:ok :running])]
+      (are [l r] (= l r)
+          ;; processed even not start a task   
+          true ( #'cloc-scheduler.core/check-and-cancel-task cancellation-flag scheduling-flag  @spec counter) 
+          0 @counter
+          0 (.get cancellation-flag)  
+          1 (.get scheduling-flag)))))

@@ -31,7 +31,9 @@
 
       [:error :not-found]
       ;; cancel queued task
-      (car/wcar redis-spec (car/zremrangebyscore "scheduling" task task)))
+      (car/wcar redis-spec (car/zremrangebyscore "scheduling" task task))
+
+      nil)
 
     ;; remove cancellation
     (car/wcar redis-spec (car/srem "cancellations" task))))
@@ -121,7 +123,7 @@
                   :docker-client docker-client}] 
 
         (loop []
-          (if (and ;(not (check-and-cancel-task cancellation-flag scheduling-flag spec task-counter))
+          (if (and (not (check-and-cancel-task cancellation-flag scheduling-flag spec task-counter))
                   (not (check-and-schedule-tasks scheduling-flag change-chan spec task-counter)))
             ;; relinqush
             (.yield Thread))
