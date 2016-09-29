@@ -3,6 +3,7 @@
             [docker-client.support.rest :as rest]
             [docker-client.core :as docker]
             [cloc-scheduler.util :refer [db-run]] 
+            [clojure.string :refer [split]]
             [cloc-scheduler.task-records :as records]))
 
 (defonce ^:const table "active_tasks")
@@ -11,9 +12,15 @@
   [client id]
   (rest/post client {} :kill-container {:container-id id} {}))
 
+(defn- get-repo-location
+  [parts]
+  (format "https://github.com/%s/%s.git") (first parts) (second parts))
+
 (defn create-pending-task
   [{:keys [docker-client]} target task-id]
-  (let [container-env nil
+  (let [parts (split target #"/" 3)
+        container-env [(format "USER_REPO=%s" (get-repo-location parts)) 
+                       (format "REPO_BRANCH=%s" (last parts))]
         {container-id :id} (docker/create-container! docker-client {:env container-env
                                                                     :image "ubuntu:cloc-task"})]
     container-id))

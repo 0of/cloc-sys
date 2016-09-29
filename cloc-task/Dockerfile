@@ -7,7 +7,7 @@ RUN apt-get update && \
 
 RUN mkdir /opt/task
 RUN cd /opt/task/; git clone https://github.com/0of/cloc-sys.git cloc
-RUN cd /opt/task/cloc; npm install .
+RUN cd /opt/task/cloc/cloc-task/; npm install .
 
 RUN mkdir /opt/Users/
 
