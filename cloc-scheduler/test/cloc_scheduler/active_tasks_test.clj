@@ -50,7 +50,7 @@
 
 (deftest test-try-start-non-existed-target
  (are [l r] (= l r)
-   [:ok :running] (try-start-task @spec "target" 1)
+   [:ok :running] (try-start-task @spec "target/repo/master" 1)
    "running" (-> (r/table table)
                  (r/get 1)
                  (r/run (:db-conn @spec))
@@ -60,13 +60,13 @@
   (scenario "setup running task"
     (-> (r/table table)
         (r/insert {:id 1
-                   :target "target"
+                   :target "target/repo/master"
                    :container_id ""
                    :state "running"})
         (r/run (:db-conn @spec))))
 
   (are [l r] (= l r)
-   [:ok :pending] (try-start-task @spec "target" 2)
+   [:ok :pending] (try-start-task @spec "target/repo/master" 2)
    "pending" (-> (r/table table)
                  (r/get 2)
                  (r/run (:db-conn @spec))
