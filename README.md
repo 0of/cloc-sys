@@ -7,3 +7,12 @@ Implementations of count lines of code(CLOC) system including scheduler task and
 
 ![system](/doc/res/cloc_sys.png)
 
+## cloc-migration
+## cloc-reporter
+## cloc-scheduler
+## cloc-task
+## cloc-web
+## cloc-webhook
+
+# License
+  Apache License Version 2.0
