@@ -29,13 +29,13 @@
   (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
     (let [id (-> (r/table "active_tasks")
                  (r/get task-id)
-                 (r/get-field :target)
-                 (r/run conn))
+                 (r/run conn)
+                 :target)
           ;; remove duplicated items
           langs (->> (group-by :lang langs)
                      (map (fn [[k v]] {k (if (sequential? v) (first v) v)}))
                      (into {}))]
-    
+
       (-> (r/table "result")
           (r/insert (merge {:id id} langs sum)
                     {:conflict :replace :return-changes true :durability :hard})
@@ -45,9 +45,9 @@
 
 (defn submit
   [req]
-  (let [task-id (:task-id (:params req))
+  (let [task-id (Integer/parseInt (:task-id (:params req)))
         body (:body req)]
-    (s/validate s/Str task-id)
+    (s/validate s/Int task-id)
     (s/validate CountResult body)
 
     (let [{error_count :errors error :first_error} (save task-id body)]
