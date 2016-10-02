@@ -7,10 +7,7 @@
                         :total s/Int
                         :code s/Int})
 
-(s/defschema CountResult {:user s/Str
-                          :repo s/Str
-                          :branch s/Str
-                          :sum {:total s/Int
+(s/defschema CountResult {:sum {:total s/Int
                                 :code s/Int}
                           :langs [LangStats]})
 
@@ -19,7 +16,7 @@
 (defn- update-task-state
   [conn task-id state]
   (-> (r/table "active_tasks")
-      (r/get 1)
+      (r/get task-id)
       (r/update (r/fn [task]
                   {:state
                     (r/branch (r/eq "running" (r/get-field task :state))
@@ -28,20 +25,23 @@
       (r/run conn)))
 
 (defn- save
-  [task-id {:keys [user repo branch sum langs]}]
-  (let [id (format "%s/%s/%s" user repo branch)
-        ;; remove duplicated items
-        langs (->> (group-by :lang langs)
-                   (map (fn [[k v]] {k (if (sequential? v) (first v) v)}))
-                   (into {}))]
-    ;; save to db
-    (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
-     (-> (r/table "result")
-         (r/insert (merge {:id id} langs sum)
-                   {:conflict :replace :return-changes true :durability :hard})
-         (r/run conn))
+  [task-id {:keys [sum langs]}]
+  (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
+    (let [id (-> (r/table "active_tasks")
+                 (r/get task-id)
+                 (r/get-field :target)
+                 (r/run conn))
+          ;; remove duplicated items
+          langs (->> (group-by :lang langs)
+                     (map (fn [[k v]] {k (if (sequential? v) (first v) v)}))
+                     (into {}))]
+    
+      (-> (r/table "result")
+          (r/insert (merge {:id id} langs sum)
+                    {:conflict :replace :return-changes true :durability :hard})
+          (r/run conn))
 
-     (update-task-state conn task-id "finished"))))
+      (update-task-state conn task-id "finished"))))
 
 (defn submit
   [req]

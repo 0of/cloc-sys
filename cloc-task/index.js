@@ -5,6 +5,17 @@ const path = require('path'),
 
 var config = loadConfig(process.env["environ"])
 
+if (process.env["JOB_ID"]) {
+  config["job-id"] = process.env["JOB_ID"];
+
+} else {
+  process.exit(1);
+}
+
+if (process.env["SUBMIT_URL"]) {
+  config["submit-url"] = process.env["SUBMIT_URL"];
+}
+
 function loadConfig(env = "dev") {
   return require(path.join(__dirname, '/config', env))
 }
@@ -18,7 +29,7 @@ function cloneRepo() {
 
 function parseAndSubmit(output) {
   const doc = YAML.safeLoad(output),
-        jobID = "jobID";
+        jobID = config["job-id"];
   let langs = [],
       sum = null;
 
@@ -42,10 +53,7 @@ function parseAndSubmit(output) {
 
   // submit
   request.post({uri: `${config["submit-url"]}/submit/${jobID}`,
-                json: {user: "user",
-                       repo: "repo",
-                       branch: "branch",
-                       sum: sum,
+                json: {sum: sum,
                        langs: langs}});
 }
 
@@ -64,6 +72,9 @@ try {
   cloneRepo();
   runCloc();
 } catch(e) {
+  console.log(e.toString());
+
+  let jobID = config["job-id"];
   request.post({uri: `${config["submit-url"]}/fail/${jobID}`,
                 json: {reason: e.toString()}});
 }
