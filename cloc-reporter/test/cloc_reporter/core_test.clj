@@ -51,10 +51,7 @@
     {:content-type :json
      :as :json
      :throw-exceptions false
-     :body (cheshire/generate-string {:user "user"
-                                      :repo "repo"
-                                      :branch "master"
-                                      :sum {:total 2394
+     :body (cheshire/generate-string {:sum {:total 2394
                                             :code 1891}
                                       :langs [{:lang "c++" :total 2394 :code 1891}]})})
 
