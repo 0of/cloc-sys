@@ -20,7 +20,8 @@
   [{:keys [docker-client]} target task-id]
   (let [parts (split target #"/" 3)
         container-env [(format "USER_REPO=%s" (get-repo-location parts))
-                       (format "REPO_BRANCH=%s" (last parts))]
+                       (format "REPO_BRANCH=%s" (last parts))
+                       (format "JOB_ID=%s" task-id)]
         {container-id :id} (docker/create-container! docker-client {:env container-env
                                                                     :image "ubuntu:cloc-task"})]
     container-id))
