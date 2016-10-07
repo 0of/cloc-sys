@@ -14,6 +14,7 @@ RethinkDB migrations and [ragtime] (https://github.com/weavejester/ragtime) rehi
 HTTP API gathers the counting result
 
 ## cloc-scheduler
+scheduling pending and cancenllation requests and starting the task in container and removing the one needs to be cancelled
 
 ## cloc-task
 counting task running in container written in Nodejs and submit the result to reporter
