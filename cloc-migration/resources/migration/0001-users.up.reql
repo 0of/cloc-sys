@@ -1,0 +1,3 @@
+;(execute-reql! (r/table-create (r/db "cloc") "users"))
+
+(execute-reql! (-> (r/db "cloc") (r/table "users") (r/index-create "user")))
