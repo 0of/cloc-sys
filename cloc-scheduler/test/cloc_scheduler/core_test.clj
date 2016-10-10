@@ -3,6 +3,7 @@
             [cloc-scheduler.core :refer :all]
             [taoensso.carmine :as car :refer [wcar]]
             [docker-client.core :as docker]
+            [rethinkdb.query :as r]
             [clojure.core.async :refer [poll! chan put!]]
             [cloc-scheduler.active-tasks :as active-tasks])       
   (:import [java.util.concurrent.atomic AtomicInteger]))
@@ -11,17 +12,18 @@
 
 (defn setup-spec
  [f]
- (reset! spec {:redis-spec {:pool {}
-                            :spec {:host "127.0.0.1"
-                                   :port 6379}}
-               :db-conn nil
-               :docker-client nil})
+ (with-open [db-conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")] 
+   (reset! spec {:redis-spec {:pool {}
+                              :spec {:host "127.0.0.1"
+                                     :port 6379}}
+                 :db-conn db-conn
+                 :docker-client nil})
 
- (with-redefs [docker/start-container! (fn [& args] args)
-               docker/create-container! (fn [& args] args) 
-               docker/stop-container! (fn [& args] args)
-               docker/remove-container! (fn [& args] args)]
-   (f)))
+   (with-redefs [docker/start-container! (fn [& args] args)
+                 docker/create-container! (fn [& args] args) 
+                 docker/stop-container! (fn [& args] args)
+                 docker/remove-container! (fn [& args] args)]
+     (f))))
 
 (defn setup-each
   [f]
@@ -37,7 +39,12 @@
   (let [task-chan (chan)
         counter (atom 0)]      
     (scenario "put one record into channel"
-      (put! task-chan {:id 1}))
+      (put! task-chan {:id 1})
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec))))
    
     (with-redefs [active-tasks/try-start-pending-task (fn [_] [:ok :running])]
       (are [l r] (= l r)
@@ -48,7 +55,12 @@
   (let [task-chan (chan)
         counter (atom running-max)]      
     (scenario "put one record into channel"
-      (put! task-chan {:id 1}))
+      (put! task-chan {:id 1})
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec))))
    
     (with-redefs [active-tasks/try-start-pending-task (fn [_] [:ok :running])]
       (are [l r] (= l r)
@@ -58,7 +70,12 @@
   (let [task-chan (chan)
         counter (atom 0)]      
     (scenario "put one record into channel"
-      (put! task-chan {:id 1}))
+      (put! task-chan {:id 1})
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec))))
    
     (with-redefs [active-tasks/try-start-pending-task (fn [_] [:error ""])]
       (are [l r] (= l r)
@@ -94,7 +111,12 @@
         counter (atom 0)
         scheduling-flag (AtomicInteger. 1)]
     (scenario "queue task request with task-id 1"
-      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target")))  
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec)))
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "user/target")))
 
     (with-redefs [active-tasks/try-start-task (fn [& args] [:ok :running])]
       (are [l r] (= l r)
@@ -108,7 +130,13 @@
         counter (atom 0)
         scheduling-flag (AtomicInteger. 1)]
     (scenario "queue task request with task-id 1"
-      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target")))  
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec)))
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "user/target")))
+
 
     (with-redefs [active-tasks/try-start-task (fn [& args] [:ok :pending])]
       (are [l r] (= l r)
@@ -122,8 +150,20 @@
         counter (atom 0)
         scheduling-flag (AtomicInteger. 1)]
     (scenario "queue task request with task-id 1"
-      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target"))  
-      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 2 "target-2"))) 
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec)))
+
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target-2"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec)))
+
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "user/target"))  
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 2 "user/target-2"))) 
 
     (with-redefs [active-tasks/try-start-task (fn [& args] [:ok :running])]
       (are [l r] (= l r)
@@ -137,8 +177,20 @@
         scheduling-flag (AtomicInteger. 0)
         cancellation-flag (AtomicInteger. 1)]
     (scenario "queue task request with task-id 1"
-      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target"))  
-      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 2 "target-2"))
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec)))
+
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target-2"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec)))
+
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "user/target"))  
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 2 "user/target-2"))
       (car/wcar (:redis-spec spec) (car/sadd "cancellations" 2)))
 
     (with-redefs [active-tasks/try-cancel-task (fn [& args] [:error :not-found])]
@@ -154,7 +206,13 @@
         scheduling-flag (AtomicInteger. 0)
         cancellation-flag (AtomicInteger. 1)]
     (scenario "queue task request with task-id 1"
-      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target"))  
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec)))
+
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "user/target"))  
       (car/wcar (:redis-spec spec) (car/sadd "cancellations" 2)))
 
     (with-redefs [active-tasks/try-cancel-task (fn [& args] [:ok :pending])]
@@ -170,7 +228,13 @@
         scheduling-flag (AtomicInteger. 0)
         cancellation-flag (AtomicInteger. 1)]
     (scenario "queue task request with task-id 1"
-      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "target"))  
+      (-> (r/table "users")
+          (r/insert {:id "github/user/target"
+                     :user "user"
+                     :filter "*"})
+          (r/run (:db-conn @spec)))
+
+      (car/wcar (:redis-spec spec) (car/zadd "scheduling" 1 "user/target"))  
       (car/wcar (:redis-spec spec) (car/sadd "cancellations" 2)))
 
     (with-redefs [active-tasks/try-cancel-task (fn [& args] [:ok :running])]
@@ -180,3 +244,5 @@
           0 @counter
           0 (.get cancellation-flag)  
           1 (.get scheduling-flag)))))
+
+(deftest test-if-user-not-registered)
