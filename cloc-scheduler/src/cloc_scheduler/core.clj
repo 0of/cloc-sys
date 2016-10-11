@@ -38,6 +38,12 @@
     ;; remove cancellation
     (car/wcar redis-spec (car/srem "cancellations" task))))
 
+(defn- registered
+  [db-conn target]
+  (some? (-> (r/table "users")
+             (r/get (format "github/%s" target))
+             (r/run db-conn))))
+
 (defn- run-task
   [{:keys [redis-spec db-conn docker-client] :as spec} counter]
   (let [running-count @counter
@@ -46,7 +52,8 @@
         [target task-id] (car/wcar redis-spec (car/zrange "scheduling" 0 0 "withscores"))]
 
     ;; run container
-    (when (and task-id (< running-count running-max))
+    ;; check user has been registered
+    (when (and task-id (< running-count running-max) (registered db-conn target))
 
       (let [[status state] (active-tasks/try-start-task spec target task-id)]
         (when (= :ok status)
