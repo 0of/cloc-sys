@@ -50,6 +50,7 @@
     (s/validate s/Int task-id)
     (s/validate CountResult body)
 
+    (info "submit:" task-id)
     (let [{error_count :errors error :first_error} (save task-id body)]
       (if (and 
             (integer? error_count)
