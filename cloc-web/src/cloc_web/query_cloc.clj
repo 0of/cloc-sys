@@ -34,22 +34,34 @@
     :larger
     (format "%dm" (/ lang-total (long 1e6)))))
 
+(defn- filter-langs
+  [{lang-filter :lang} langs]
+  (if (= lang-filter "SUM")
+    (get-in langs [:total])
+    (get-in langs [lang-filter :total] 0)))
+
 (defn- build-context-map
-  [langs]
-  (let [content ["code of lines:"  (-> (get-in langs [:total])
-                                       format-total)] 
-        widths (vec (map measure-text-width content)) 
-        offset [(/ (first widths) 2) 
-                (+ (first widths) (- (/ (second widths) 2) 1))]]
-    {:text content
-     :widths widths
-     :offset offset
-     :badge_width (reduce + widths) 
-     :colors ["#555" "#4c1"]}))
+  [langs user-id]
+  (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
+    (let [filter (-> (r/table "users")
+                     (r/get user-id)
+                     (r/pluck :lang)
+                     (r/run conn))
+          content ["code of lines:"  (-> (filter-langs filter langs)
+                                         format-total)]
+          widths (vec (map measure-text-width content))
+          offset [(/ (first widths) 2) 
+                  (+ (first widths) (- (/ (second widths) 2) 1))]]
+      {:text content
+       :widths widths
+       :offset offset
+       :badge_width (reduce + widths) 
+       :colors ["#555" "#4c1"]})))
 
 (defn get-svg-badge
   [{:keys [user repo branch]}]
   (let [query-id (format "%s/%s/%s" user repo branch)
+        user-id (format "github/%s/%s" user repo)
         langs (get-langs query-id)]
-    (render-file "templates/flat-badge.svg" (build-context-map langs))))
+    (render-file "templates/flat-badge.svg" (build-context-map langs user-id))))
 
