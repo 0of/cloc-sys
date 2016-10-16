@@ -5,13 +5,14 @@
             [ring.middleware.json :as json]
             [compojure.handler :as handler]
             [cloc-web.query-cloc :refer [get-svg-badge]]
-            [cloc-web.users :refer [register update-display-lang]])          
+            [cloc-web.users :refer [register update-display-lang list-registered-repos]])          
   (:gen-class))
 
 (defroutes app
   (GET "/:user/:repo/:branch/svg_badge" {params :params} (get-svg-badge params))
   (POST "/:user/:repo/register" {params :params} (register params))  
-  (PATCH "/:user/:repo/display_lang" {params :params body :body} (update-display-lang params body)))
+  (PATCH "/:user/:repo/display_lang" {params :params body :body} (update-display-lang params body))
+  (GET "/:user/registered_repos" {params :params} (list-registered-repos params)))
 
 (def handlers
   (-> (handler/site app)
