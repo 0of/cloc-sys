@@ -1,7 +1,12 @@
 (ns cloc-web.users
   (:require [schema.core :as s]
             [rethinkdb.query :as r]
+            [clojure.string :refer [split]]
             [clojure.tools.logging :refer [info]]))
+
+(defn- get-repo-location
+  [parts]
+  (format "https://github.com/%s/%s.git" (first parts) (second parts)))
 
 (defn register
   [{:keys [user repo]}]
@@ -25,3 +30,15 @@
           (r/get id)
           (r/update {:lang new-lang})
           (r/run conn)))))
+
+(defn list-registered-repos
+  [{:keys [user]}]
+  (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
+    (let [repos (-> (r/table "users") 
+                    (r/filter (r/fn [u] (r/eq user (r/get-field u :user))))
+                    (r/run conn))
+          to-repo-url (fn [id] 
+                        (let [parts (rest (split id #"/" 3))]
+                          (get-repo-location parts)))]
+      (map #(update-in % [:id] to-repo-url)))))
+
