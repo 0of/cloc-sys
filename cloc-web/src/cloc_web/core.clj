@@ -3,10 +3,11 @@
             [compojure.core :refer :all]
             [ring.middleware.params :as params]
             [ring.middleware.json :as json]
+            [ring.middleware.cookies :as cookies]
             [compojure.handler :as handler]
             [cloc-web.query-cloc :refer [get-svg-badge]]
             [cloc-web.users :refer [register update-display-lang list-registered-repos]]  
-            [cloc-web.auth :refer [auth access-token]])   
+            [cloc-web.auth :refer [auth auth-callback]])   
   (:gen-class))
 
 (defroutes app
@@ -16,10 +17,11 @@
   (GET "/:user/registered_repos" {params :params} (list-registered-repos params))
 
   (GET "/github/auth" auth)
-  (POST "/github/access_token" {body :body} (access-token body)))
+  (GET "/github/auth_callback" {params :params} (auth-callback params)))
 
 (def handlers
   (-> (handler/site app)
+      cookies/wrap-cookies
       (json/wrap-json-body {:keywords? true}) 
       params/wrap-params))
 

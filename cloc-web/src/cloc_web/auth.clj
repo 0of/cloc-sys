@@ -27,20 +27,24 @@
 
 (defn auth
   []
-  {:client_id ClientID
-   :state (rand-int Integer/MAX_VALUE)  
-   :scope (clojure.string/join " " ["user:email" "public_repo" "read:repo_hook"])})
+  (let [params {:client_id ClientID
+                :state (rand-int Integer/MAX_VALUE) 
+                :scope (clojure.string/join " " ["user:email" "public_repo" "read:repo_hook"])}]
+    {:link (format "https://github.com/login/oauth/authorize?%s" (ring.util.codec/form-encode params))}))
 
-(defn access-token
-  [{:keys [state code]}] 
-  (let [resp (client/post "https://github.com/login/oauth/access_token" {:form-params {:client_id ClientID
-                                                                                       :client_secret ClientSecret
-                                                                                       :code code
-                                                                                       :state state}                                                                            
-                                                                         :accept :json})]
-    (if-let [token (-> resp
-                       :body          
-                       (parse-string true)
-                       :access_token)]
-      {:status 200 :body (jwt-token token {:expires (-> 28 days)})}
-      {:status 401})))     
+(defn auth-callback
+  [{:keys [state code]}]
+  (if code
+    (let [resp (client/post "https://github.com/login/oauth/access_token" {:form-params {:client_id ClientID
+                                                                                         :client_secret ClientSecret
+                                                                                         :code code
+                                                                                         :state state}                                                                            
+                                                                           :accept :json})]
+      (if-let [token (-> resp
+                         :body          
+                         (parse-string true)
+                         :access_token)]
+        {:status 200 :cookies {"session_id" {:value (jwt-token token {:expires (-> 28 days)})}}}
+        {:status 401}))
+
+    {:status 200}))    
