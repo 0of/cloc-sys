@@ -2,8 +2,9 @@
   (:require [schema.core :as s]
             [clj-http.client :as client]
             [cheshire.core :refer [parse-string]]
-            [clj-jwt.core :refer [jwt to-str sign verify str->jwt]]
-            [clj-time.core :refer [now plus days]]))     
+            [clj-jwt.core :refer [jwt to-str sign str->jwt]]
+            [clj-time.core :refer [now plus days]]   
+            [clojure.tools.logging :refer [info]]))  
 
 (defonce ^:const ClientID "")
 (defonce ^:const ^:private ClientSecret "")
@@ -20,7 +21,7 @@
 
 (defn jwt-token
   [access-token {:keys [expires] :as opts}]
-  (-> (claim access-token opts)
+  (-> (claim access-token expires)
       jwt
       (sign :HS256 JwtSecret)
       to-str))
@@ -48,3 +49,28 @@
         {:status 401}))
 
     {:status 200}))    
+
+(defn jwt-decode-session
+  [session]
+  (try 
+    (some-> session
+            str->jwt
+            :claims
+            :iss)       
+    (catch Exception e
+      nil)))
+
+(defn wrap-session
+ [handler]
+ (fn [request]
+   (if-let [session (get-in request [:cookies "session_id" :value])]
+     (if-let [token (jwt-decode-session session)]
+       (handler (assoc request :token token))
+       (handler request))
+     (handler request))))
+
+(defn gen-session
+  "for debug"
+  [req]
+  (info req)
+  {:status 200 :cookies {"session_id" {:value (jwt-token "debug_token" {:expires (-> 28 days)})}}}) 
