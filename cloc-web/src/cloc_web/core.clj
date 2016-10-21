@@ -7,11 +7,15 @@
             [compojure.handler :as handler]
             [cloc-web.query-cloc :refer [get-svg-badge]]
             [cloc-web.users :refer [register update-display-lang list-registered-repos]]  
-            [cloc-web.auth :refer [auth auth-callback]])   
+            [cloc-web.auth :refer [auth auth-callback wrap-session gen-session]])
   (:gen-class))
 
 (defroutes app
   (GET "/:user/:repo/:branch/svg_badge" {params :params} (get-svg-badge params))
+
+  ;; gen token for debug
+  (GET "/gen_session" req (gen-session req))
+
   (POST "/:user/:repo/register" {params :params} (register params))  
   (PATCH "/:user/:repo/display_lang" {params :params body :body} (update-display-lang params body))
   (GET "/:user/registered_repos" {params :params} (list-registered-repos params))
@@ -21,8 +25,9 @@
 
 (def handlers
   (-> (handler/site app)
+      (json/wrap-json-body {:keywords? true})
+      wrap-session
       cookies/wrap-cookies
-      (json/wrap-json-body {:keywords? true}) 
       params/wrap-params))
 
 (defn -main
