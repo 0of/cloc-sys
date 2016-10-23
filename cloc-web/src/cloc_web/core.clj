@@ -7,7 +7,7 @@
             [compojure.handler :as handler]
             [cloc-web.query-cloc :refer [get-svg-badge]]
             [cloc-web.users :refer [register update-display-lang list-registered-repos]]  
-            [cloc-web.auth :refer [auth auth-callback wrap-session gen-session]])
+            [cloc-web.auth :refer [auth auth-callback wrap-token wrap-user gen-session]])
   (:gen-class))
 
 (defroutes app
@@ -16,9 +16,9 @@
   ;; gen token for debug
   (GET "/gen_session" req (gen-session req))
 
-  (POST "/:user/:repo/register" {params :params} (register params))  
-  (PATCH "/:user/:repo/display_lang" {params :params body :body} (update-display-lang params body))
-  (GET "/:user/registered_repos" {params :params} (list-registered-repos params))
+  (POST "/user/:repo/register" {params :params} (register params))  
+  (PATCH "/user/:repo/display_lang" {params :params body :body} (update-display-lang params body))
+  (GET "/user/registered_repos" {params :params} (list-registered-repos params))
 
   (GET "/github/auth" auth)
   (GET "/github/auth_callback" {params :params} (auth-callback params)))
@@ -26,7 +26,8 @@
 (def handlers
   (-> (handler/site app)
       (json/wrap-json-body {:keywords? true})
-      wrap-session
+      wrap-user
+      wrap-token
       cookies/wrap-cookies
       params/wrap-params))
 
