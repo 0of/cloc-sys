@@ -70,8 +70,8 @@
   (fn [request]
     (if (clojure.string/starts-with? (:uri request) "/user")
       (if-let [token (:token request)]  
-        (let [resp (client/get "https://api.github.com/user" {:headers {"Authorization" (format "Bearer %s" token)}}
-                                                          :accept :json)]
+        (let [resp (client/get "https://api.github.com/user" {:headers {"Authorization" (format "Bearer %s" token)}
+                                                              :accept :json})]
           (if (= (:status resp) 200)  
             (handler (assoc-in request [:params :user] (get-in resp [:body :login])))    
             (unauthorized)))

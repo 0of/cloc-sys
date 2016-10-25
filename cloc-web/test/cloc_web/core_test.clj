@@ -4,7 +4,9 @@
             [ring.adapter.jetty :as jetty]
             [rethinkdb.query :as r]
             [clj-http.client :as client]
-            [cheshire.core :as cheshire])
+            [cheshire.core :as cheshire]
+            [cloc-web.auth :refer [jwt-token]]
+            [clj-time.core :refer [days]])
   (:import [java.io Closeable]))
 
 (defonce ^:const port 50002)
@@ -35,4 +37,11 @@
 
 (deftest register-with-unauthorized-user
   (is 401 (:status (client/post (str url "/user/repo/register") {:accept :json
-                                                                 :throw-exceptions false}))))                                                                             
+                                                                 :throw-exceptions false}))))
+
+(deftest register-with-authorized-user
+  (with-redefs [clj-http.client/get (fn [& param] {:status 200
+                                                   :body {:login "0of"}})]
+    (is 200 (:status (client/post (str url "/user/repo/register") {:accept :json
+                                                                   :throw-exceptions false
+                                                                   :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))
