@@ -8,6 +8,7 @@
   (:import [java.io Closeable]))
 
 (defonce ^:const port 50002)
+(defonce ^:const url "http://localhost:50002")
 
 (def db-conn (atom nil))
 
@@ -26,11 +27,12 @@
   [f]
   (f)
   (-> (r/table "users")
-      r/delete     
+      r/delete
       (r/run @db-conn)))
 
 (use-fixtures :once setup-server)
 (use-fixtures :each setup-each)
 
 (deftest register-with-unauthorized-user
-  (is 401 (:status (client/post "/user/repo/register" {:accept :json}))))                                                                             
+  (is 401 (:status (client/post (str url "/user/repo/register") {:accept :json
+                                                                 :throw-exceptions false}))))                                                                             

@@ -68,7 +68,7 @@
 (defn wrap-user
   [handler]
   (fn [request]
-    (if (clojure.string/starts-with? (:url request) "/user")
+    (if (clojure.string/starts-with? (:uri request) "/user")
       (if-let [token (:token request)]  
         (let [resp (client/get "https://api.github.com/user" {:headers {"Authorization" (format "Bearer %s" token)}}
                                                           :accept :json)]
