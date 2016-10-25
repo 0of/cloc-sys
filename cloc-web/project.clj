@@ -15,4 +15,5 @@
                  [clj-jwt "0.1.1"]
                  [clj-time "0.12.0"]]
   :main ^:skip-aot cloc-web.core
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]]}})
