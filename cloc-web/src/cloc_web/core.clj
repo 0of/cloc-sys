@@ -7,7 +7,7 @@
             [compojure.handler :as handler]
             [cloc-web.query-cloc :refer [get-svg-badge]]
             [cloc-web.users :refer [register update-display-lang list-registered-repos]]  
-            [cloc-web.auth :refer [auth auth-callback wrap-token wrap-user gen-session]])
+            [cloc-web.auth :refer [auth auth-callback wrap-token wrap-user]])
   (:gen-class))
 
 (defroutes app
