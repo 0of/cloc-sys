@@ -13,9 +13,6 @@
 (defroutes app
   (GET "/:user/:repo/:branch/svg_badge" {params :params} (get-svg-badge params))
 
-  ;; gen token for debug
-  (GET "/gen_session" req (gen-session req))
-
   (POST "/user/:repo/register" {params :params} (register params))  
   (PATCH "/user/:repo/display_lang" {params :params body :body} (update-display-lang params body))
   (GET "/user/registered_repos" {params :params} (list-registered-repos params))
