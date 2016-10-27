@@ -72,7 +72,7 @@
       (if-let [token (:token request)]  
         (let [resp (client/get "https://api.github.com/user" {:headers {"Authorization" (format "Bearer %s" token)}
                                                               :accept :json})]
-          (if (= (:status resp) 200)  
+          (if (= (:status resp) 200)
             (handler (assoc-in request [:params :user] (get-in resp [:body :login])))    
             (unauthorized)))
 
@@ -87,9 +87,3 @@
        (handler (assoc request :token token))
        (handler request))
      (handler request))))
-
-(defn gen-session
-  "for debug"
-  [req]
-  (info req)
-  {:status 200 :cookies {"session_id" {:value (jwt-token "debug_token" {:expires (-> 28 days)})}}}) 

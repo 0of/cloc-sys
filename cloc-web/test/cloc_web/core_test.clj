@@ -36,8 +36,16 @@
 (use-fixtures :each setup-each)
 
 (deftest register-with-unauthorized-user
-  (is 401 (:status (client/post (str url "/user/repo/register") {:accept :json
-                                                                 :throw-exceptions false}))))
+  (testing "no session"
+    (is 401 (:status (client/post (str url "/user/repo/register") {:accept :json
+                                                                   :throw-exceptions false}))))
+
+  (testing "invalid session id"
+    (with-redefs [clj-http.client/get (fn [& param] {:status 400
+                                                     :body {:error ""}})]
+      (is 401 (:status (client/post (str url "/user/repo/register") {:accept :json
+                                                                     :throw-exceptions false
+                                                                     :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}}))))))
 
 (deftest register-with-authorized-user
   (with-redefs [clj-http.client/get (fn [& param] {:status 200
@@ -45,3 +53,4 @@
     (is 200 (:status (client/post (str url "/user/repo/register") {:accept :json
                                                                    :throw-exceptions false
                                                                    :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))
+
