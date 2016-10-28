@@ -32,25 +32,61 @@
       r/delete
       (r/run @db-conn)))
 
+(defmacro scenario [aside & body] `(do ~@body))
+
 (use-fixtures :once setup-server)
 (use-fixtures :each setup-each)
 
 (deftest register-with-unauthorized-user
   (testing "no session"
-    (is 401 (:status (client/post (str url "/user/repo/register") {:accept :json
-                                                                   :throw-exceptions false}))))
+    (is (= 401 (:status (client/post (str url "/user/repo/register") {:accept :json
+                                                                      :throw-exceptions false})))))
 
   (testing "invalid session id"
     (with-redefs [clj-http.client/get (fn [& param] {:status 400
                                                      :body {:error ""}})]
-      (is 401 (:status (client/post (str url "/user/repo/register") {:accept :json
-                                                                     :throw-exceptions false
-                                                                     :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}}))))))
+      (is (= 401 (:status (client/post (str url "/user/repo/register") {:accept :json
+                                                                        :throw-exceptions false
+                                                                        :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))
 
 (deftest register-with-authorized-user
   (with-redefs [clj-http.client/get (fn [& param] {:status 200
                                                    :body {:login "0of"}})]
-    (is 200 (:status (client/post (str url "/user/repo/register") {:accept :json
-                                                                   :throw-exceptions false
-                                                                   :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))
+    (is (= 200 (:status (client/post (str url "/user/repo/register") {:accept :json
+                                                                      :throw-exceptions false
+                                                                      :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}}))))))
+
+(deftest list-registered-repos-with-unauthorized-user
+  (testing "no session"
+    (is (= 401 (:status (client/post (str url "/user/registered_repos") {:accept :json
+                                                                         :throw-exceptions false})))))
+
+  (testing "invalid session id"
+    (with-redefs [clj-http.client/get (fn [& param] {:status 400
+                                                     :body {:error ""}})]
+      (is (= 401 (:status (client/post (str url "/user/registered_repos") {:accept :json
+                                                                           :throw-exceptions false
+                                                                           :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))
+
+(deftest list-registered-repos-with-authorized-user
+  (scenario "register repos"
+    (-> (r/table "users")
+        (r/insert {:id "github/user/target1"
+                   :user "user"
+                   :filter "*"
+                   :lang "SUM"})
+        (r/run @db-conn))
+
+    (-> (r/table "users")
+        (r/insert {:id "github/user/target2"
+                   :user "user"
+                   :filter "*"
+                   :lang "SUM"})
+        (r/run @db-conn)))
+
+  (with-redefs [clj-http.client/get (fn [& param] {:status 200
+                                                   :body {:login "0of"}})]
+    (is (= 2 (count (:body (client/post (str url "/user/registered_repos") {:accept :json
+                                                                            :throw-exceptions false
+                                                                            :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))
 
