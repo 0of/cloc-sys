@@ -40,5 +40,4 @@
           to-repo-url (fn [id] 
                         (let [parts (rest (split id #"/" 3))]
                           (get-repo-location parts)))]
-      (map #(update-in % [:id] to-repo-url)))))
-
+      (map #(update-in % [:id] to-repo-url) repos))))

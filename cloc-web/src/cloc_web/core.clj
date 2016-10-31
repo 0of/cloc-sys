@@ -24,6 +24,7 @@
 
 (def handlers
   (-> (handler/site app)
+      json/wrap-json-response
       (json/wrap-json-body {:keywords? true})
       wrap-user
       wrap-token

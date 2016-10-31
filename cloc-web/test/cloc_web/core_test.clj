@@ -58,35 +58,42 @@
 
 (deftest list-registered-repos-with-unauthorized-user
   (testing "no session"
-    (is (= 401 (:status (client/post (str url "/user/registered_repos") {:accept :json
-                                                                         :throw-exceptions false})))))
+    (is (= 401 (:status (client/get (str url "/user/registered_repos") {:accept :json
+                                                                        :throw-exceptions false})))))
 
   (testing "invalid session id"
-    (with-redefs [clj-http.client/get (fn [& param] {:status 400
-                                                     :body {:error ""}})]
-      (is (= 401 (:status (client/post (str url "/user/registered_repos") {:accept :json
-                                                                           :throw-exceptions false
-                                                                           :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))
+    (let [client-get clj-http.client/get]
+      (with-redefs [clj-http.client/get (fn [& param] {:status 400
+                                                       :body {:error ""}})]
+        (is (= 401 (:status (client-get (str url "/user/registered_repos") {:accept :json
+                                                                            :throw-exceptions false
+                                                                            :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}}))))))))
 
 (deftest list-registered-repos-with-authorized-user
   (scenario "register repos"
     (-> (r/table "users")
-        (r/insert {:id "github/user/target1"
-                   :user "user"
+        (r/insert {:id "github/0of/target1"
+                   :user "0of"
                    :filter "*"
                    :lang "SUM"})
         (r/run @db-conn))
 
     (-> (r/table "users")
-        (r/insert {:id "github/user/target2"
-                   :user "user"
+        (r/insert {:id "github/0of/target2"
+                   :user "0of"
                    :filter "*"
                    :lang "SUM"})
         (r/run @db-conn)))
 
-  (with-redefs [clj-http.client/get (fn [& param] {:status 200
-                                                   :body {:login "0of"}})]
-    (is (= 2 (count (:body (client/post (str url "/user/registered_repos") {:accept :json
-                                                                            :throw-exceptions false
-                                                                            :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))
-
+  (let [client-get clj-http.client/get]
+    (with-redefs [clj-http.client/get (fn [& param] {:status 200
+                                                     :body {:login "0of"}})]
+      (-> (str url "/user/registered_repos")
+          (client-get {:accept :json
+                       :throw-exceptions false
+                       :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})
+          :body
+          (cheshire/parse-string true)
+          count
+          (= 2)
+          is))))
