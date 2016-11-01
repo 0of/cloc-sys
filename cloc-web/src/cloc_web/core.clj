@@ -13,15 +13,18 @@
 (defroutes app
   (GET "/:user/:repo/:branch/svg_badge" {params :params} (get-svg-badge params))
 
-  (POST "/user/:repo/register" {params :params} (register params))  
-  (PATCH "/user/:repo/display_lang" {params :params body :body} (update-display-lang params body))
-  (GET "/user/registered_repos" {params :params} (list-registered-repos params))
+  (context "/user" []
+    (POST "/:repo/register" {params :params} (register params))  
+    (PATCH "/:repo/display_lang" {params :params body :body} (update-display-lang params body))
+    (GET "/registered_repos" {params :params} (list-registered-repos params)))
 
-  (GET "/github/auth" auth)
-  (GET "/github/auth_callback" {params :params} (auth-callback params)))
+  (context "github" []
+    (GET "/auth" auth)
+    (GET "/auth_callback" {params :params} (auth-callback params))))
 
 (def handlers
   (-> (handler/site app)
+      json/wrap-json-response
       (json/wrap-json-body {:keywords? true})
       wrap-user
       wrap-token
