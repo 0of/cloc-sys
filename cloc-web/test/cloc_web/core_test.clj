@@ -97,3 +97,20 @@
           count
           (= 2)
           is))))
+
+(deftest patch-display-lang-with-unauthorized-user
+ (testing "no session"
+    (is (= 401 (:status (client/patch (str url "/user/target/display_lang") {:accept :json
+                                                                             :body ""
+                                                                             :content-type :json
+                                                                             :throw-exceptions false}))))
+
+  (testing "invalid session id"
+    (let [client-get clj-http.client/get]
+      (with-redefs [clj-http.client/get (fn [& param] {:status 400
+                                                       :body {:error ""}})]
+        (is (= 401 (:status (client/patch (str url "/user/target/display_lang") {:accept :json
+                                                                                 :body ""
+                                                                                 :content-type :json
+                                                                                 :throw-exceptions false
+                                                                                 :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))))
