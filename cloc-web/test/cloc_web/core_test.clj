@@ -37,6 +37,13 @@
 (use-fixtures :once setup-server)
 (use-fixtures :each setup-each)
 
+(defn- get-display-lang
+  [id]
+  (-> (r/table "users")
+      (r/get id)
+      (r/run @db-conn)
+      :lang))
+
 (deftest register-with-unauthorized-user
   (testing "no session"
     (is (= 401 (:status (client/post (str url "/user/repo/register") {:accept :json
@@ -114,3 +121,41 @@
                                                                                  :content-type :json
                                                                                  :throw-exceptions false
                                                                                  :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))))
+
+(deftest patch-display-lang-with-authorized-user
+  (scenario "register repos"
+    (-> (r/table "users")
+        (r/insert {:id "github/0of/target"
+                   :user "0of"
+                   :filter "*"
+                   :lang "SUM"})
+        (r/run @db-conn)))
+
+  (with-redefs [clj-http.client/get (fn [& param] {:status 200
+                                                   :body {:login "0of"}})]
+
+    (testing "Clojure as display language"
+      (-> (str url "/user/target/display_lang")
+          (client/patch {:accept :json
+                         :body  (cheshire/generate-string {:lang "Clojure"})
+                         :content-type :json
+                         :as :json
+                         :throw-exceptions false
+                         :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})
+          :status
+          (= 200)
+          (and (= "Clojure" (get-display-lang "github/0of/target")))
+          is)
+
+     (testing "Default display language"
+        (-> (str url "/user/target/display_lang")
+            (client/patch {:accept :json
+                           :body ""
+                           :content-type :json
+                           :as :json
+                           :throw-exceptions false
+                           :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})
+            :status
+            (= 200)
+            (and (= "SUM" (get-display-lang "github/0of/target")))
+            is)))))
