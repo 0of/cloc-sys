@@ -6,7 +6,8 @@
             [clj-http.client :as client]
             [cheshire.core :as cheshire]
             [cloc-web.auth :refer [jwt-token]]
-            [clj-time.core :refer [days]])
+            [clj-time.core :refer [days]]
+            [clojure.xml :as xml])
   (:import [java.io Closeable]))
 
 (defonce ^:const port 50002)
@@ -30,6 +31,9 @@
   (f)
   (-> (r/table "users")
       r/delete
+      (r/run @db-conn))
+  (-> (r/table "result")
+      r/delete     
       (r/run @db-conn)))
 
 (defmacro scenario [aside & body] `(do ~@body))
@@ -159,3 +163,24 @@
             (= 200)
             (and (= "SUM" (get-display-lang "github/0of/target")))
             is)))))
+
+(deftest get-svg-non-existent-user
+  (scenario "register repo and insert record"
+    (-> (r/table "users")
+        (r/insert {:id "github/0of/target"
+                   :user "0of"
+                   :filter "*"
+                   :lang "SUM"})
+        (r/run @db-conn))
+
+    (-> (r/table "result")
+        (r/insert {"Clojure" {"code" 1891
+                              "lang" "Clojure"
+                              "total" 2394}
+                   "code" 1891
+                   "id" "0of/target/master"
+                   "total" 2394})
+        (r/run @db-conn)))
+
+  (let [svg-doc (xml/parse (:body (client/get (str url "/0of/target/master/svg_badge") {:as :stream})))]
+    (is (= "2394" (get-in svg-doc [:content 1 :content 1 :content 0])))))
