@@ -38,7 +38,7 @@
   [{lang-filter :lang} langs]
   (if (= lang-filter "SUM")
     (get-in langs [:total])
-    (get-in langs [lang-filter :total] 0)))
+    (get-in langs [(keyword lang-filter) :total] 0)))
 
 (defn- build-context-map
   [langs user-id]
