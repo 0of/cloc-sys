@@ -165,6 +165,9 @@
             is)))))
 
 (deftest get-svg-non-existent-user
+  (is (= 404 (:status (client/get (str url "/0of/target/master/svg_badge") {:as :stream :throw-exceptions false})))))
+
+(deftest get-svg
   (scenario "register repo and insert record"
     (-> (r/table "users")
         (r/insert {:id "github/0of/target"

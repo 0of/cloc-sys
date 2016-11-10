@@ -63,5 +63,7 @@
   (let [query-id (format "%s/%s/%s" user repo branch)
         user-id (format "github/%s/%s" user repo)
         langs (get-langs query-id)]
-    (render-file "templates/flat-badge.svg" (build-context-map langs user-id))))
+    (if langs
+      (render-file "templates/flat-badge.svg" (build-context-map langs user-id))
+      {:status 404})))
 
