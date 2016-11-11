@@ -165,6 +165,10 @@
             is)))))
 
 (deftest get-svg-non-existent-user
+  (is (= 404 (:status (client/get (str url "/0of/target/master/svg_badge") {:as :stream 
+                                                                            :throw-exceptions false})))))
+
+(deftest get-svg
   (scenario "register repo and insert record"
     (-> (r/table "users")
         (r/insert {:id "github/0of/target"
@@ -184,3 +188,44 @@
 
   (let [svg-doc (xml/parse (:body (client/get (str url "/0of/target/master/svg_badge") {:as :stream})))]
     (is (= "2394" (get-in svg-doc [:content 1 :content 1 :content 0])))))
+
+(deftest get-svg-after-filter-updated
+  (scenario "register repo and insert record"
+    (-> (r/table "users")
+        (r/insert {:id "github/0of/target"
+                   :user "0of"
+                   :filter "*"
+                   :lang "SUM"})
+        (r/run @db-conn))
+    (-> (r/table "result")
+        (r/insert {"Clojure" {"code" 1891
+                              "lang" "Clojure"
+                              "total" 2394}
+                   "C++" {"code" 341
+                          "lang" "C++"
+                          "total" 520}
+                   "code" 2232
+                   "id" "0of/target/master"
+                   "total" 2914})
+        (r/run @db-conn)))
+
+
+  (with-redefs [clj-http.client/get (fn [& param] {:status 200
+                                                   :body {:login "0of"}})]
+
+    (testing "Clojure as display language"
+      (-> (str url "/user/target/display_lang")
+          (client/patch {:accept :json
+                         :body  (cheshire/generate-string {:lang "Clojure"})
+                         :content-type :json
+                         :as :json
+                         :throw-exceptions false
+                         :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})
+          :status
+          (= 200)
+          (and (= "Clojure" (get-display-lang "github/0of/target")))
+          is)))
+
+  (testing "total count"
+    (let [svg-doc (xml/parse (:body (client/get (str url "/0of/target/master/svg_badge") {:as :stream})))]
+      (is (= "2394" (get-in svg-doc [:content 1 :content 1 :content 0]))))))

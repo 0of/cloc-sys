@@ -38,7 +38,7 @@
   [{lang-filter :lang} langs]
   (if (= lang-filter "SUM")
     (get-in langs [:total])
-    (get-in langs [lang-filter :total] 0)))
+    (get-in langs [(keyword lang-filter) :total] 0)))
 
 (defn- build-context-map
   [langs user-id]
@@ -63,5 +63,7 @@
   (let [query-id (format "%s/%s/%s" user repo branch)
         user-id (format "github/%s/%s" user repo)
         langs (get-langs query-id)]
-    (render-file "templates/flat-badge.svg" (build-context-map langs user-id))))
+    (if langs
+      (render-file "templates/flat-badge.svg" (build-context-map langs user-id))
+      {:status 404})))
 
