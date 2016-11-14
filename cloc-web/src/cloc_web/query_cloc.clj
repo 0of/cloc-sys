@@ -3,11 +3,15 @@
             [rethinkdb.query :as r]
             [selmer.parser :refer [render-file]]
             [clojure.tools.logging :refer [info]]
-            [selmer.util :as u])
+            [selmer.util :as u]
+            [ring.util.io :as ring-io]
+            [clojure.java.io :as io])
 
- (:import [java.awt.geom.Rectangle2D]
-          [java.awt.font FontRenderContext]
-          [java.awt Font RenderingHints]))
+  (:import [java.awt.geom.Rectangle2D]
+           [java.awt.font FontRenderContext]
+           [java.awt Font RenderingHints]
+           [org.apache.batik.transcoder TranscoderInput TranscoderOutput]
+           [org.apache.batik.transcoder.image PNGTranscoder]))
 
 (defn- get-langs
   [id]
@@ -67,3 +71,18 @@
       (render-file "templates/flat-badge.svg" (build-context-map langs user-id))
       {:status 404})))
 
+(defn- output-to-png-stream
+  [svg-text out] 
+  (with-open [in (io/input-stream (.getBytes svg-text "UTF-8"))]
+    (let [transcoder (PNGTranscoder.)
+          trans-input (TranscoderInput. in)
+          trans-output (TranscoderOutput. out)]
+      (.transcode transcoder trans-input trans-output))))
+
+(defn render-png-badge
+  [params]
+  (let [doc (get-svg-badge params)]
+    (if (= 404 (:status doc))
+      {:headers {"Content-Type" "image/png"}
+       :body (ring-io/piped-input-stream 
+               (partial output-to-png-stream doc))})))
