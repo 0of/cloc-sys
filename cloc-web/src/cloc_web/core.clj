@@ -5,13 +5,14 @@
             [ring.middleware.json :as json]
             [ring.middleware.cookies :as cookies]
             [compojure.handler :as handler]
-            [cloc-web.query-cloc :refer [get-svg-badge]]
+            [cloc-web.query-cloc :refer [get-svg-badge render-png-badge]]
             [cloc-web.users :refer [register update-display-lang list-registered-repos list-repos]]  
             [cloc-web.auth :refer [auth auth-callback wrap-token wrap-user]])
   (:gen-class))
 
 (defroutes app
   (GET "/:user/:repo/:branch/svg_badge" {params :params} (get-svg-badge params))
+  (GET "/:user/:repo/:branch/png_badge" {params :params} (render-png-badge params))
 
   (context "/user" []
     (POST "/:repo/register" {params :params} (register params))  

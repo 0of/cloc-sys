@@ -13,7 +13,9 @@
                  [clj-http "3.2.0"]
                  [cheshire "5.6.3"]
                  [clj-jwt "0.1.1"]
-                 [clj-time "0.12.0"]]
+                 [clj-time "0.12.0"]
+                 [org.clojars.pallix/batik "1.7.0"]]
+
   :main ^:skip-aot cloc-web.core
   :profiles {:uberjar {:aot :all}
              :dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]]}})
