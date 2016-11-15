@@ -83,6 +83,7 @@
   [params]
   (let [doc (get-svg-badge params)]
     (if (= 404 (:status doc))
+      doc
       {:headers {"Content-Type" "image/png"}
-       :body (ring-io/piped-input-stream 
+       :body (ring-io/piped-input-stream
                (partial output-to-png-stream doc))})))
