@@ -44,6 +44,10 @@
     (get-in langs [:total])
     (get-in langs [(keyword lang-filter) :total] 0)))
 
+(defn- padding-text-width
+  [width]
+  (+ width 7.))
+
 (defn- build-context-map
   [langs user-id]
   (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
@@ -53,7 +57,7 @@
                      (r/run conn))
           content ["code of lines:"  (-> (filter-langs filter langs)
                                          format-total)]
-          widths (vec (map measure-text-width content))
+          widths (mapv (comp padding-text-width measure-text-width) content)
           offset [(/ (first widths) 2) 
                   (+ (first widths) (- (/ (second widths) 2) 1))]]
       {:text content
