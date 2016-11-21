@@ -63,3 +63,8 @@
   (let [repos (into {} (list-github-repos user))
         registered (list-registered-repos params)]
     (merge repos registered)))
+
+(defn me
+  [{:keys [user] :as params}]
+  {:user user
+   :login "github"})
