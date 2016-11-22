@@ -1,17 +1,15 @@
 (ns cloc-webapp.core
   (:require [ring.adapter.jetty :as jetty]
             [compojure.core :refer :all]
-            [ring.middleware.params :as params]
-            [compojure.handler :as handler])
+            [ring.util.response :refer [resource-response]])          
   (:gen-class))
 
-(defroutes app)
+(defroutes app
   ;; main page
-
-(def handlers
-  (-> (handler/site app)
-      params/wrap-params))
+  (GET  "/" [] (resource-response "index.html" {:root "public"}))
+  (GET  "/dash" [] (resource-response "dash.html" {:root "public"}))
+  (GET  "/login" [] (resource-response "login.html" {:root "public"})))  
 
 (defn -main
   [& args]
-  (jetty/run-jetty handlers {:port 8080}))
+  (jetty/run-jetty app {:port 8080}))
