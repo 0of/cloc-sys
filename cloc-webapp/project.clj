@@ -8,9 +8,17 @@
                  [ring/ring-jetty-adapter "1.4.0"]
                  [compojure "1.5.1"]
                  [om "0.8.0-rc1"]
-                 [hiccup "1.0.5"]]
-
-  :plugins [[lein-npm "0.6.1"]]
+                 [hiccup "1.0.5"]
+                 [cljs-http "0.1.21"]]
+  :plugins [[lein-cljsbuild "1.1.4"]]
+  :cljsbuild {:builds [{:source-paths ["src-cljs/main"]
+                        :compiler {:output-to "resources/public/js/main.js"
+                                   :optimizations :none
+                                   :source-map true}}
+                       {:source-paths ["src-cljs/dash"]
+                        :compiler {:output-to "resources/public/js/dash.js"
+                                   :optimizations :none
+                                   :source-map true}}]}
   :main ^:skip-aot cloc-webapp.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
