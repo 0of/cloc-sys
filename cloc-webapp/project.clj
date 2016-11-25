@@ -14,6 +14,7 @@
   :cljsbuild {:builds [{:source-paths ["src-cljs/main"]
                         :compiler {:output-to "resources/public/js/main.js"
                                    :optimizations :none
+                                   :output-dir "resources/public/"
                                    :source-map true}}
                        {:source-paths ["src-cljs/dash"]
                         :compiler {:output-to "resources/public/js/dash.js"
