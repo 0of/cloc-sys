@@ -82,8 +82,10 @@
 (defn wrap-token
  [handler]
  (fn [request]
-   (if-let [session (get-in request [:cookies "session_id" :value])]
-     (if-let [token (jwt-decode-session session)]
+   (if-let [session (get-in request [:headers "Authorization"] "")]
+     (if-let [token (-> session
+                        (clojure.string/replace "Bearer " "")
+                        jwt-decode-session)]
        (handler (assoc request :token token))
        (handler request))
      (handler request))))
