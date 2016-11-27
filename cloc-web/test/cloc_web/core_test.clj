@@ -58,14 +58,14 @@
                                                      :body {:error ""}})]
       (is (= 401 (:status (client/post (str url "/user/repo/register") {:accept :json
                                                                         :throw-exceptions false
-                                                                        :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))
+                                                                        :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}})))))))
 
 (deftest register-with-authorized-user
   (with-redefs [clj-http.client/get (fn [& param] {:status 200
                                                    :body {:login "0of"}})]
     (is (= 200 (:status (client/post (str url "/user/repo/register") {:accept :json
                                                                       :throw-exceptions false
-                                                                      :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}}))))))
+                                                                      :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}}))))))
 
 (deftest list-registered-repos-with-unauthorized-user
   (testing "no session"
@@ -78,7 +78,7 @@
                                                        :body {:error ""}})]
         (is (= 401 (:status (client-get (str url "/user/registered_repos") {:accept :json
                                                                             :throw-exceptions false
-                                                                            :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}}))))))))
+                                                                            :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}}))))))))
 
 (deftest list-registered-repos-with-authorized-user
   (scenario "register repos"
@@ -102,7 +102,7 @@
       (-> (str url "/user/registered_repos")
           (client-get {:accept :json
                        :throw-exceptions false
-                       :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})
+                       :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}})
           :body
           (cheshire/parse-string true)
           count
@@ -124,7 +124,7 @@
                                                                                  :body ""
                                                                                  :content-type :json
                                                                                  :throw-exceptions false
-                                                                                 :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})))))))))
+                                                                                 :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}})))))))))
 
 (deftest patch-display-lang-with-authorized-user
   (scenario "register repos"
@@ -145,7 +145,7 @@
                          :content-type :json
                          :as :json
                          :throw-exceptions false
-                         :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})
+                         :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}})
           :status
           (= 200)
           (and (= "Clojure" (get-display-lang "github/0of/target")))
@@ -158,7 +158,7 @@
                            :content-type :json
                            :as :json
                            :throw-exceptions false
-                           :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})
+                           :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}})
             :status
             (= 200)
             (and (= "SUM" (get-display-lang "github/0of/target")))
@@ -220,7 +220,7 @@
                          :content-type :json
                          :as :json
                          :throw-exceptions false
-                         :cookies {"session_id" {:discard true :value (jwt-token "debug_token" {:expires (-> 28 days)})}}})
+                         :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}})
           :status
           (= 200)
           (and (= "Clojure" (get-display-lang "github/0of/target")))
