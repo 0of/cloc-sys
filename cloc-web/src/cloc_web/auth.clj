@@ -82,7 +82,7 @@
 (defn wrap-token
  [handler]
  (fn [request]
-   (if-let [session (get-in request [:headers "Authorization"] "")]
+   (if-let [session (get-in request [:headers "authorization"] "")]
      (if-let [token (-> session
                         (clojure.string/replace "Bearer " "")
                         jwt-decode-session)]
