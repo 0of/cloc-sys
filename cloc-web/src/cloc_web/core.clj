@@ -20,7 +20,7 @@
     (GET "/registered_repos" {params :params} (list-registered-repos params))
     (GET "/repos" {params :params} (list-repos params))
 
-    (GET "/me" {params :params} (me params)))
+    (GET "/me" {params :params} (me params)))    
 
   (context "/github" []
     (GET "/auth" auth)
