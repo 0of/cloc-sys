@@ -50,10 +50,10 @@
                          :body          
                          (parse-string true)
                          :access_token)]
-        {:status 200 :cookies {"session_id" {:value (jwt-token token {:expires (-> 28 days)})}}}
+        {:status 200 :body {"token" (jwt-token token {:expires (-> 28 days)})}}
         {:status 401}))
 
-    {:status 200}))    
+    {:status 200}))
 
 (defn jwt-decode-session
   [session]
