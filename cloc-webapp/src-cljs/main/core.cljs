@@ -1,10 +1,10 @@
 (ns cloc-webapp.core
   (:require-macros [cljs.core.async.macros :refer [go alt!]])
-  (:require [goog.events :as events]
-            [cljs.core.async :refer [put! <! >! chan timeout]]
+  (:require [cljs.core.async :refer [put! <! >! chan timeout]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [cljs-http.client :as http]))
+            [cljs-http.client :as http])
+  (:import [goog.net Cookies]))
 
 (enable-console-print!)
 
@@ -12,6 +12,10 @@
 
 (defn widget [state owner]
   (reify  
+    om/IInitState
+    (init-state [_]
+      {:auth (.get (Cookies.) "session_value")})
+
     om/IRenderState
     (render-state [this state]  
       (if (:user state)
@@ -20,7 +24,7 @@
 
     om/IDidMount
     (did-mount [this]    
-      (go (let [resp (<! (http/get "http://localhost:4679/users/me"))  
+      (go (let [resp (<! (http/get "http://localhost:4679/users/me" {:oauth-token (om/get-state this :auth)}))  
                 user (get-in resp [:body :user])]
             (prn resp)            
             (when user

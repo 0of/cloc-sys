@@ -50,7 +50,7 @@
                          :body          
                          (parse-string true)
                          :access_token)]
-        {:status 200 :body {"token" (jwt-token token {:expires (-> 28 days)})}}
+        {:status 200 :body {:token (jwt-token token {:expires (-> 28 days)})}}
         {:status 401}))
 
     {:status 200}))
