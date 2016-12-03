@@ -67,48 +67,6 @@
                                                                       :throw-exceptions false
                                                                       :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}}))))))
 
-(deftest list-registered-repos-with-unauthorized-user
-  (testing "no session"
-    (is (= 401 (:status (client/get (str url "/user/registered_repos") {:accept :json
-                                                                        :throw-exceptions false})))))
-
-  (testing "invalid session id"
-    (let [client-get clj-http.client/get]
-      (with-redefs [clj-http.client/get (fn [& param] {:status 400
-                                                       :body {:error ""}})]
-        (is (= 401 (:status (client-get (str url "/user/registered_repos") {:accept :json
-                                                                            :throw-exceptions false
-                                                                            :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}}))))))))
-
-(deftest list-registered-repos-with-authorized-user
-  (scenario "register repos"
-    (-> (r/table "users")
-        (r/insert {:id "github/0of/target1"
-                   :user "0of"
-                   :filter "*"
-                   :lang "SUM"})
-        (r/run @db-conn))
-
-    (-> (r/table "users")
-        (r/insert {:id "github/0of/target2"
-                   :user "0of"
-                   :filter "*"
-                   :lang "SUM"})
-        (r/run @db-conn)))
-
-  (let [client-get clj-http.client/get]
-    (with-redefs [clj-http.client/get (fn [& param] {:status 200
-                                                     :body {:login "0of"}})]
-      (-> (str url "/user/registered_repos")
-          (client-get {:accept :json
-                       :throw-exceptions false
-                       :headers {"Authorization" (format "Bearer %s" (jwt-token "debug_token" {:expires (-> 28 days)}))}})
-          :body
-          (cheshire/parse-string true)
-          count
-          (= 2)
-          is))))
-
 (deftest patch-display-lang-with-unauthorized-user
  (testing "no session"
     (is (= 401 (:status (client/patch (str url "/user/target/display_lang") {:accept :json

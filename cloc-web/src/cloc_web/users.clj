@@ -68,3 +68,7 @@
   [{:keys [user] :as params}]
   {:user user
    :login "github"})
+
+(defn is_login
+  [{:keys [user] :as params}]
+  (some? user))

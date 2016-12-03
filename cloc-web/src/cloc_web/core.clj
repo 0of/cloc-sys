@@ -6,7 +6,7 @@
             [ring.middleware.cookies :as cookies]
             [compojure.handler :as handler]
             [cloc-web.query-cloc :refer [get-svg-badge render-png-badge]]
-            [cloc-web.users :refer [register update-display-lang list-registered-repos list-repos me]]  
+            [cloc-web.users :refer [register update-display-lang me is_login]]  
             [cloc-web.auth :refer [auth auth-callback wrap-token wrap-user]])
   (:gen-class))
 
@@ -15,12 +15,14 @@
   (GET "/:user/:repo/:branch/png_badge" {params :params} (render-png-badge params))
 
   (context "/user" []
-    (POST "/:repo/register" {params :params} (register params))  
-    (PATCH "/:repo/display_lang" {params :params body :body} (update-display-lang params body))
-    (GET "/registered_repos" {params :params} (list-registered-repos params))
-    (GET "/repos" {params :params} (list-repos params))
 
-    (GET "/me" {params :params} (me params)))    
+    (context "/:repo" []
+      (POST "/register" {params :params} (register params))  
+      (PATCH "/display_lang" {params :params body :body} (update-display-lang params body)))
+    ;  (GET "/" {params :param} (get-repo params)))
+
+    (GET "/me" {params :params} (me params))    
+    (GET "/is_login" {params :params} (is_login params)))
 
   (context "/github" []
     (GET "/auth" auth)
