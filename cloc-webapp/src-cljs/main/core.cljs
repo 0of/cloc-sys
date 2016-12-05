@@ -24,7 +24,7 @@
 
     om/IDidMount
     (did-mount [this]    
-      (go (let [resp (<! (http/get "http://localhost:4679/users/me" {:oauth-token (om/get-state this :auth)}))  
+      (go (let [resp (<! (http/get "http://localhost:4679/users/is_login" {:oauth-token (om/get-state this :auth)}))  
                 user (get-in resp [:body :user])]
             (prn resp)            
             (when user
