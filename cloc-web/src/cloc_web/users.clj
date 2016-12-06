@@ -67,8 +67,22 @@
 (defn me
   [{:keys [user] :as params}]
   {:user user
-   :login "github"})
+   :login "github"
+   :repos (list-repos params)})
 
 (defn is_login
   [{:keys [user] :as params}]
   (some? user))
+
+(defn get-repo
+  [{:keys [user repo] :as params}]
+  (let [id (format "github/%s/%s" user repo)]
+    (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
+      (if-let [repo-config (-> (r/table "users")
+                               (r/get id)
+                               (r/run conn))]
+        {:status 200 :body {:config repo-config 
+                            :result (-> (r/table "result")
+                                        (r/get id)
+                                        (r/run conn))}}
+        {:status 404}))))
