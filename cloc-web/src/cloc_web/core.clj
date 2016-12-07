@@ -15,14 +15,13 @@
   (GET "/:user/:repo/:branch/png_badge" {params :params} (render-png-badge params))
 
   (context "/user" []
+    (GET "/me" {params :params} (me params))    
+    (GET "/is_login" {params :params} (is_login params))
 
     (context "/:repo" []
       (POST "/register" {params :params} (register params))  
       (PATCH "/display_lang" {params :params body :body} (update-display-lang params body))
-      (GET "/" {params :param} (get-repo params)))
-
-    (GET "/me" {params :params} (me params))    
-    (GET "/is_login" {params :params} (is_login params)))
+      (GET "/" {params :param} (get-repo params))))
 
   (context "/github" []
     (GET "/auth" auth)
