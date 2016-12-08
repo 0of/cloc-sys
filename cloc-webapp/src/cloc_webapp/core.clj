@@ -3,13 +3,17 @@
             [compojure.core :refer :all]
             [compojure.route :as route]
             [compojure.handler :as handler]
-            [ring.util.response :refer [resource-response]]
+            [ring.util.response :refer [resource-response header]]
             [cloc-webapp.auth :refer [auth auth-callback]])          
   (:gen-class))
 
+(defonce api-server "http://127.0.0.1:4679")
+
 (defroutes app
   ;; main page
-  (GET  "/" [] (resource-response "index.html" {:root "public"}))
+  (GET  "/" [] (header
+                  (resource-response "index.html" {:root "public"})
+                  "Access-Control-Allow-Origin" "http://127.0.0.1:4679/users/is_login"))
   (GET  "/dash" [] (resource-response "dash.html" {:root "public"}))
   (GET  "/login" [] (resource-response "login.html" {:root "public"}))
 
@@ -22,7 +26,7 @@
 (defn api-server-handler
   [f]
   (fn [request]
-    (f (assoc request :api-server "http://localhost:4679"))))
+    (f (assoc request :api-server api-server))))
 
 (def handlers
   (-> (handler/site app)

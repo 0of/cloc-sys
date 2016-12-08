@@ -14,7 +14,7 @@
   (reify  
     om/IInitState
     (init-state [_]
-      {:auth (.get (Cookies.) "session_value")})
+      {:auth (.get (Cookies. js/document) "session_id")})
 
     om/IRenderState
     (render-state [this state]  
@@ -23,11 +23,12 @@
         (dom/a #js {:ref "/login"} "Login")))
 
     om/IDidMount
-    (did-mount [this]    
-      (go (let [resp (<! (http/get "http://localhost:4679/users/is_login" {:oauth-token (om/get-state this :auth)}))  
+    (did-mount [this]
+      (prn (om/get-state owner :auth))
+      (go (let [resp (<! (http/get "http://127.0.0.1:4679/users/is_login" {:oauth-token (om/get-state owner :auth)}))  
                 user (get-in resp [:body :user])]
             (prn resp)            
             (when user
-              (om/set-state! this :user user)))))))      
+              (om/set-state! owner :user user)))))))      
 
 (om/root widget app-state {:target (.getElementById js/document "content")})

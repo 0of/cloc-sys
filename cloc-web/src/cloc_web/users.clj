@@ -66,13 +66,14 @@
 
 (defn me
   [{:keys [user] :as params}]
-  {:user user
-   :login "github"
-   :repos (list-repos params)})
+  {:status 200
+   :body {:user user
+          :login "github"
+          :repos (list-repos params)}})
 
 (defn is_login
   [{:keys [user] :as params}]
-  (some? user))
+  {:status 200 :body {:result (some? user)}})
 
 (defn get-repo
   [{:keys [user repo] :as params}]

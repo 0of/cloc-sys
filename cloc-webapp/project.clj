@@ -9,7 +9,9 @@
                  [compojure "1.5.1"]
                  [om "0.8.0-rc1"]
                  [hiccup "1.0.5"]
-                 [cljs-http "0.1.21"]]
+                 [cljs-http "0.1.21"]
+                 [clj-http "3.2.0"]
+                 [cheshire "5.6.3"]]
   :plugins [[lein-cljsbuild "1.1.4"]]
   :cljsbuild {:builds [{:source-paths ["src-cljs/main"]
                         :compiler {:output-to "resources/public/js/main.js"
