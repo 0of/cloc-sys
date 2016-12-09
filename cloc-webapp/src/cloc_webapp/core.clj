@@ -4,18 +4,18 @@
             [compojure.route :as route]
             [compojure.handler :as handler]
             [ring.util.response :refer [resource-response header]]
-            [cloc-webapp.auth :refer [auth auth-callback]])          
+            [cloc-webapp.auth :refer [auth auth-callback debug-auth]])       
   (:gen-class))
 
-(defonce api-server "http://127.0.0.1:4679")
+(defonce api-server "http://localhost:9000/api")
 
 (defroutes app
   ;; main page
-  (GET  "/" [] (header
-                  (resource-response "index.html" {:root "public"})
-                  "Access-Control-Allow-Origin" "http://127.0.0.1:4679/users/is_login"))
+  (GET  "/" [] (resource-response "index.html" {:root "public"}))
   (GET  "/dash" [] (resource-response "dash.html" {:root "public"}))
   (GET  "/login" [] (resource-response "login.html" {:root "public"}))
+
+  (GET "/debug" [] (debug-auth))
 
   (context "/github" []
     (GET "/auth" req (auth req))

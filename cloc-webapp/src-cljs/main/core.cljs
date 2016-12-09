@@ -25,9 +25,9 @@
     om/IDidMount
     (did-mount [this]
       (prn (om/get-state owner :auth))
-      (go (let [resp (<! (http/get "http://127.0.0.1:4679/users/is_login" {:oauth-token (om/get-state owner :auth)}))  
+      (go (let [resp (<! (http/get "/api/users/is_login" {:oauth-token (om/get-state owner :auth)}))  
                 user (get-in resp [:body :user])]
-            (prn resp)            
+            (prn resp)
             (when user
               (om/set-state! owner :user user)))))))      
 
