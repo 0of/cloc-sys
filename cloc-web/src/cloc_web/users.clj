@@ -73,7 +73,9 @@
 
 (defn is_login
   [{:keys [user] :as params}]
-  {:status 200 :body {:result (some? user)}})
+  {:status 200 
+   :body {:result (some? user) 
+          :user user}})
 
 (defn get-repo
   [{:keys [user repo] :as params}]

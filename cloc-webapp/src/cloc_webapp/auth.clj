@@ -18,4 +18,6 @@
     {:status 302 :headers {"Location" "/dash"} :body "" :cookies {"session_id" {:value token}}}
     {:status 401 :body "access denied (authorization)"}))
   
-
+(defn debug-auth
+  []
+  {:status 200 :body "" :cookies {"session_id" {:value "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODM3MDcwNDAsImlhdCI6MTQ4MTI4Nzg0MCwiaXNzIjoiZGVidWcifQ.cvC0hLKg9G3j0RGzfeC7O1OuH4N2084e-dUHjPH-c-s"}}})
