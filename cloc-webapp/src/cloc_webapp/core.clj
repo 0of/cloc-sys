@@ -4,10 +4,28 @@
             [compojure.route :as route]
             [compojure.handler :as handler]
             [ring.util.response :refer [resource-response header]]
-            [cloc-webapp.auth :refer [auth auth-callback debug-auth]])       
+            [cloc-webapp.auth :refer [auth auth-callback debug-auth]]       
+            [clj-http.client :as client]
+            [hiccup.core :refer [html]]
+            [hiccup.element :refer [javascript-tag]])
   (:gen-class))
 
 (defonce api-server "http://localhost:9000/api")
+
+(defn- render-dash
+  [req]
+  (if-let [session (get-in request [:cookies "session_id"])]
+    (if-let [self (client/get (format "%s/users/me" api-server) 
+                        {:headers {"authorization" (format "Bearer %s" session)}})]
+      (html [:body
+              [:div {:id "content"}]
+              (include-js "http://cdn.bootcss.com/react/0.14.0-rc1/react.js")
+              (include-js "goog/base.js")
+              (include-js "js/main.j")
+              (javascript-tag "")
+              (javascript-tag "goog.require(\"cloc_webapp.core\");")])           
+      {:status 401 :body "access denied (authorization)"})
+    {:status 401 :body "access denied (authorization)"}))
 
 (defroutes app
   ;; main page

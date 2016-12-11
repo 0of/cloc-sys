@@ -19,16 +19,14 @@
     om/IRenderState
     (render-state [this state]  
       (if (:user state)
-        (dom/a #js {:ref "/dash"} "Dashboard")
-        (dom/a #js {:ref "/login"} "Login")))
+        (dom/a #js {:href "/dash"} "Dashboard")
+        (dom/a #js {:href "/login"} "Login")))
 
     om/IDidMount
     (did-mount [this]
-      (prn (om/get-state owner :auth))
-      (go (let [resp (<! (http/get "/api/users/is_login" {:oauth-token (om/get-state owner :auth)}))  
+      (go (let [resp (<! (http/get "/api/user/is_login" {:oauth-token (om/get-state owner :auth)}))
                 user (get-in resp [:body :user])]
-            (prn resp)
             (when user
-              (om/set-state! owner :user user)))))))      
+              (om/set-state! owner :user user)))))))
 
 (om/root widget app-state {:target (.getElementById js/document "content")})
