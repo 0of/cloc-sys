@@ -13,10 +13,10 @@
   (reify
     om/IDidMount
     (did-mount [this]    
-      (go (let [resp (<! (http/get "http://localhost:4679/users/repos" {:oauth-token (om/get-state this :auth)}))  
-                repos (:body resp)]
-            (when repos
-              (om/set-state! this :repos repo)))))      
+      (go (let [resp (<! (http/get "/api/user/me" {:oauth-token (om/get-state this :auth)}))]  
+            (if (= 200 (:status resp))
+               (om/set-state! this :me (:body resp))
+               (om/set-state! this :repos repo)))))      
    
     om/IRenderState
     (render-state [this state]  
@@ -24,3 +24,7 @@
         (apply dom/ul nil
           (map (fn [repo] (dom/li nil (:full_name repo))) (:repos this)))))))
 
+
+
+
+(om/root widget app-state {:target (.getElementById js/document "content")})
