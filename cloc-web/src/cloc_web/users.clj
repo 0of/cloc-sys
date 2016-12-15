@@ -69,7 +69,9 @@
   {:status 200
    :body {:user user
           :login "github"
-          :repos (list-repos params)}})
+          :repos [{:name "rep"
+                   :full_name "0of/rep" 
+                   :description "description"}]}})
 
 (defn is_login
   [{:keys [user] :as params}]

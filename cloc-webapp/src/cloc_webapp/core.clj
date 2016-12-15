@@ -8,7 +8,9 @@
             [clj-http.client :as client]
             [hiccup.core :refer [html]]
             [hiccup.element :refer [javascript-tag]]
-            [cheshire.core :refer [generate-string]])
+            [hiccup.page :refer [include-js]]
+            [cheshire.core :refer [generate-string]]
+            [clojure.tools.logging :refer [info]])
   (:gen-class))
 
 (defonce api-server "http://localhost:9000/api")
@@ -16,20 +18,22 @@
 (defn- template
   [self]
   (html [:body
-              [:div {:id "content"}]
-              (include-js "http://cdn.bootcss.com/react/0.14.0-rc1/react.js")
-              (include-js "goog/base.js")
-              (include-js "js/main.j")
-              (javascript-tag (format "(function() {window.cloc_me=\"%s\"})()" (generate-string self)))
-              (javascript-tag "goog.require(\"cloc_webapp.core\");")]))           
+            [:div {:id "content"}]
+            (include-js "http://cdn.bootcss.com/react/0.14.0-rc1/react.js")
+            (include-js "dash/goog/base.js")
+            (include-js "dash/js/dash.js")
+            (javascript-tag (format "(function() {window.cloc_me=%s})()" (generate-string self)))
+            (javascript-tag "goog.require(\"cloc_webapp.dash\");")]))           
 
 (defn- render-dash
   [req]
-  (if-let [session (get-in request [:cookies "session_id"])]
-    (if-let [self (client/get (format "%s/users/me" api-server) 
-                        {:headers {"authorization" (format "Bearer %s" session)}})]
-      (template self)
-      {:status 401 :body "access denied (authorization)"})
+  (if-let [session (get-in req [:cookies "session_id"])]
+    (let [resp (client/get (format "%s/user/me" api-server) 
+                        {:headers {"authorization" (format "Bearer %s" (:value session))}
+                         :throw-exceptions false})]
+      (if (= 200 (:status resp))
+        (template (:body resp))
+        {:status 401 :body "access denied (authorization)"}))
     {:status 401 :body "access denied (authorization)"}))
 
 (defroutes app
