@@ -19,9 +19,11 @@
                                    :output-dir "resources/public/"
                                    :source-map true}}
                        {:source-paths ["src-cljs/dash"]
-                        :compiler {:output-to "resources/public/js/dash.js"
+                        :compiler {:output-to "resources/public/dash/js/dash.js"
                                    :optimizations :none
+                                   :output-dir "resources/public/dash/"
                                    :source-map true}}]}
   :main ^:skip-aot cloc-webapp.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :dev {:dependencies [[org.clojure/tools.logging "0.3.1"]]}})
