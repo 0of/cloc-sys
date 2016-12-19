@@ -212,3 +212,19 @@
 
   (let [header (:headers (client/get (str url "/0of/target/master/png_badge")))]
     (is (= (get header "Content-Type") "image/png"))))
+
+(deftest uregister-with-authorized-user
+  (scenario "register repo and insert record"
+    (-> (r/table "users")
+        (r/insert {:id "github/0of/target"
+                   :user "0of"
+                   :filter "*"
+                   :lang "SUM"})
+        (r/run @db-conn)))
+
+  (with-redefs [clj-http.client/get (fn [& param] {:status 200
+                                                   :body {:login "0of"}})]
+    (is (= 200 (:status (client/post (str url "/user/target/unregister") {:accept :json
+                                                                          :throw-exceptions false
+                                                                          :headers {"Authorization" (format "Bearer %s" (jwt-token "token" {:expires (-> 28 days)}))}}))))))
+

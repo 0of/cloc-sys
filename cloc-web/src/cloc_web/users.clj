@@ -27,6 +27,15 @@
                      :lang "SUM"})
           (r/run conn)))))
 
+(defn unregister
+  [{:keys [user repo]}]
+  (let [id (format "github/%s/%s" user repo)]
+    (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
+      (-> (r/table "users")
+          (r/get id)
+          r/delete
+          (r/run conn)))))
+
 (defn update-display-lang
   [{:keys [user repo]} body]
   (let [id (format "github/%s/%s" user repo)
