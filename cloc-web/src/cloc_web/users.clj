@@ -27,6 +27,15 @@
                      :lang "SUM"})
           (r/run conn)))))
 
+(defn unregister
+  [{:keys [user repo]}]
+  (let [id (format "github/%s/%s" user repo)]
+    (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
+      (-> (r/table "users")
+          (r/get id)
+          r/delete
+          (r/run conn)))))
+
 (defn update-display-lang
   [{:keys [user repo]} body]
   (let [id (format "github/%s/%s" user repo)
@@ -45,10 +54,10 @@
     (let [repos (-> (r/table "users") 
                     (r/filter (r/fn [u] (r/eq user (r/get-field u :user))))
                     (r/run conn))
-          to-repo-url (fn [id] 
-                        (let [[first-part second-part] (rest (split id #"/" 3))]
+          to-repo-url (fn [repo] 
+                        (let [[first-part second-part] (rest (split (:id repo) #"/" 3))]
                           (get-repo-location first-part second-part)))]
-      (map #(update-in % [:id] to-repo-url) repos))))
+      (map (juxt to-repo-url identity) repos))))
 
 (defn- list-github-repos
   [user]
@@ -60,9 +69,11 @@
 
 (defn list-repos
   [{:keys [user] :as params}]
-  (let [repos (into {} (list-github-repos user))
-        registered (list-registered-repos params)]
-    (merge repos registered)))
+  (let [repos (into {} (list-github-repos user)) ;; {"url":object}
+        registered (into {} (list-registered-repos params))
+        add-registered (fn [repo registered]
+                          (merge repo {:registered registered}))]
+    (merge-with add-registered repos registered)))
 
 (defn me
   [{:keys [user] :as params}]

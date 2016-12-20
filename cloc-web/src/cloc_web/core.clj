@@ -6,7 +6,7 @@
             [ring.middleware.cookies :as cookies]
             [compojure.handler :as handler]
             [cloc-web.query-cloc :refer [get-svg-badge render-png-badge]]
-            [cloc-web.users :refer [register update-display-lang me is_login get-repo]]  
+            [cloc-web.users :refer [register unregister update-display-lang me is_login get-repo]]  
             [cloc-web.auth :refer [auth auth-callback wrap-token wrap-user]])
   (:gen-class))
 
@@ -20,6 +20,7 @@
 
     (context "/:repo" []
       (POST "/register" {params :params} (register params))  
+      (POST "/unregister" {params :params} (unregister params))
       (PATCH "/display_lang" {params :params body :body} (update-display-lang params body))
       (GET "/" {params :param} (get-repo params))))
 
