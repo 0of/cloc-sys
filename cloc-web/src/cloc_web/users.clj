@@ -72,17 +72,28 @@
   (let [repos (into {} (list-github-repos user)) ;; {"url":object}
         registered (into {} (list-registered-repos params))
         add-registered (fn [repo registered]
-                          (merge repo {:registered registered}))]
-    (merge-with add-registered repos registered)))
+                          (merge repo {:registered registered}))
+        into-vec (fn [[url values]]
+                    (assoc values :url url))]
+    (map into-vec (merge-with add-registered repos registered))))
 
 (defn me
   [{:keys [user] :as params}]
   {:status 200
    :body {:user user
           :login "github"
-          :repos [{:name "rep"
+          :repos [{:url (get-repo-location "0of/rep")
+                   :name "rep"
                    :full_name "0of/rep" 
-                   :description "description"}]}})
+                   :description "description"}
+                  {:url (get-repo-location "0of/rep2")
+                   :name "rep2"
+                   :full_name "0of/rep2" 
+                   :description "description"
+                   :registered {:id "0of/rep2"
+                                :user "0of"
+                                :filter "*"
+                                :lang "SUM"}}]}})
 
 (defn is_login
   [{:keys [user] :as params}]
