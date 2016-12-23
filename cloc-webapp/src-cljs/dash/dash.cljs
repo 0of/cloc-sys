@@ -24,8 +24,45 @@
     om/IRender
     (render [this]
       (apply dom/div nil
-        (map-indexed repo-button state)))))           
+        (map-indexed repo-button state)))))  
 
+;; {:auth - :repo -}
+(defn repo-config-panel [state onwer]
+  (reify
+    om/IInitState
+    (init-state [_]
+      (let [mutable (atom {:state (if 
+                                    (:registered current-repo) 
+                                    [:registered]
+                                    [:unregistered])})]
+        (merge {:mutable mutable
+                :state-cursor (:state (om/root-cursor mutable))} state)))   
+
+    om/IRenderState
+    (render-state [this state]
+      (let [cursor (:state-cursor state)
+            current-state (nth (om/observe owner (:state-cursor state)) 0)
+            auth-token (:auth state)
+            register-repo-url (format "/api/user/%s/register" (get-in state [:repo :name]))
+            register-fn (fn [] 
+                          (when (= current-state :unregistered)              
+                            (go (let [resp (<! (http/post register-repo-url {:oauth-token auth-token
+                                                                             :json-params {}}))]
+                                   (if (= 200 (:status resp))
+                                     ;; refresh repo state
+                                     ;; TODO
+                                     (om/update! cursor [0] :registered))))))]
+
+        (case current-state
+          :registered (dom/h2 nil (get (:repo state) "full_name"))
+          :registering (dom/h2 
+                          nil
+                          "registering...")
+          :unregistered (dom/button 
+                          #js {:onClick register-fn}
+                          "register this repo"))))))
+
+;; {:repos - :auth -}
 (defn repo-detail-view [state owner]
   (reify
     om/IInitState
@@ -34,11 +71,11 @@
 
     om/IRenderState
     (render-state [this state]  
-      (let [current-index (nth (om/observe owner (current-index-cur)) 0)]
-        (if (< current-index (count state))
-          (let [current-repo (nth state current-index)] 
-            ;; check registered or not   
-            (dom/h2 nil (get current-repo "full_name")))
+      (let [current-index (nth (om/observe owner (current-index-cur)) 0)
+            repos (:repos state)]    
+        (if (< current-index (count repos))
+          (om/build repo-config-panel {:repo (nth repos current-index)
+                                       :auth (:auth state)})                              
           (dom/h2 nil "Add your repos"))))))
 
 (defn widget [state owner]
@@ -53,6 +90,7 @@
       (let [repos (vec (get-in state [:me "repos"]))]  
         (dom/div nil
           (om/build repo-list-view repos)
-          (om/build repo-detail-view repos))))))
+          (om/build repo-detail-view {:repos (:me state)
+                                      :auth (:auth state)}))))))                                       
 
 (om/root widget app-state {:target (.getElementById js/document "content")})
