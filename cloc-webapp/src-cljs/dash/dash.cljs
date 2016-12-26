@@ -1,6 +1,8 @@
 (ns cloc-webapp.dash
   (:require-macros [cljs.core.async.macros :refer [go alt!]])
   (:require [goog.json :as json]
+            [goog.string :as str] 
+            [goog.string.format] 
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs-http.client :as http])
@@ -27,7 +29,7 @@
         (map-indexed repo-button state)))))  
 
 ;; {:auth - :repo -}
-(defn repo-config-panel [state onwer]
+(defn repo-config-panel [state owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -35,23 +37,24 @@
                                     (:registered current-repo) 
                                     [:registered]
                                     [:unregistered])})]
-        (merge {:mutable mutable
-                :state-cursor (:state (om/root-cursor mutable))} state)))   
+        (merge state {:mutable mutable
+                      :state-cursor (:state (om/root-cursor mutable))})))   
 
     om/IRenderState
     (render-state [this state]
-      (let [cursor (:state-cursor state)
-            current-state (nth (om/observe owner (:state-cursor state)) 0)
+      (let [cursor (om/ref-cursor (:state-cursor state))   
+            current-state (nth (om/observe owner cursor) 0)
             auth-token (:auth state)
-            register-repo-url (format "/api/user/%s/register" (get-in state [:repo :name]))
+            register-repo-url (str/format "/api/user/%s/register" (get-in state [:repo "name"]))
             register-fn (fn [] 
-                          (when (= current-state :unregistered)              
+                          (when (= current-state :unregistered)
+                            (om/update! cursor [0] :registering)  
+
                             (go (let [resp (<! (http/post register-repo-url {:oauth-token auth-token
                                                                              :json-params {}}))]
                                    (if (= 200 (:status resp))
-                                     ;; refresh repo state
-                                     ;; TODO
-                                     (om/update! cursor [0] :registered))))))]
+                                     (prn resp)  
+                                     (om/update! cursor [0] :unregistered))))))]
 
         (case current-state
           :registered (dom/h2 nil (get (:repo state) "full_name"))
@@ -74,7 +77,7 @@
       (let [current-index (nth (om/observe owner (current-index-cur)) 0)
             repos (:repos state)]    
         (if (< current-index (count repos))
-          (om/build repo-config-panel {:repo (nth repos current-index)
+          (om/build repo-config-panel {:repo (nth repos current-index) 
                                        :auth (:auth state)})                              
           (dom/h2 nil "Add your repos"))))))
 
@@ -86,11 +89,12 @@
        :auth (.get (Cookies. js/document) "session_id")})
 
     om/IRenderState
-    (render-state [this state]
+    (render-state [this state]  
       (let [repos (vec (get-in state [:me "repos"]))]  
+        (prn repos)
         (dom/div nil
           (om/build repo-list-view repos)
-          (om/build repo-detail-view {:repos (:me state)
+          (om/build repo-detail-view {:repos repos
                                       :auth (:auth state)}))))))                                       
 
 (om/root widget app-state {:target (.getElementById js/document "content")})
