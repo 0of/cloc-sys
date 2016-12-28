@@ -10,23 +10,26 @@
 
 (enable-console-print!)
 
-(def app-state (atom {:current-index [0]}))
+(def app-state (atom {:current-index [0]
+                      :repos []
+                      :registered-states []}))             
 
+;; cursors
 (defn current-index-cur []
   (om/ref-cursor (:current-index (om/root-cursor app-state))))
 
-(defn- repo-button [index repo]
-  (dom/button 
-    #js {:onClick
-           (fn [e] (om/update! (current-index-cur) [0] index))}
-    (get repo "full_name")))
-
+;; views
 (defn repo-list-view [state owner]
   (reify
     om/IRender
     (render [this]
-      (apply dom/div nil
-        (map-indexed repo-button state)))))  
+      (letfn [(repo-button [index repo]
+                (dom/button 
+                  #js {:onClick
+                         (fn [e] (om/update! (current-index-cur) [0] index))}
+                  (get repo "full_name")))]
+        (apply dom/div nil
+          (map-indexed repo-button (:repos @app-state)))))))  
 
 ;; {:auth - :repo -}
 (defn repo-config-panel [state owner]
@@ -40,8 +43,14 @@
         (merge state {:mutable mutable
                       :state-cursor (:state (om/root-cursor mutable))})))   
 
+    om/IWillMount
+    (will-mount [_]
+      (prn "repo panel mount"))
+
     om/IRenderState
     (render-state [this state]
+      (prn "repo panel render")
+
       (let [cursor (om/ref-cursor (:state-cursor state))   
             current-state (nth (om/observe owner cursor) 0)
             auth-token (:auth state)
@@ -68,14 +77,10 @@
 ;; {:repos - :auth -}
 (defn repo-detail-view [state owner]
   (reify
-    om/IInitState
-    (init-state [_]
-      state)
-
-    om/IRenderState
-    (render-state [this state]  
+    om/IRender
+    (render [this]  
       (let [current-index (nth (om/observe owner (current-index-cur)) 0)
-            repos (:repos state)]    
+            repos (:repos @app-state)]
         (if (< current-index (count repos))
           (om/build repo-config-panel {:repo (nth repos current-index) 
                                        :auth (:auth state)})                              
@@ -85,16 +90,21 @@
   (reify  
     om/IInitState
     (init-state [_]
-      {:me (js->clj (json/parse (.-cloc_me js/window)))
-       :auth (.get (Cookies. js/document) "session_id")})
+      {:auth (.get (Cookies. js/document) "session_id")})
+
+    om/IWillMount
+    (will-mount [_]
+      (let [me (js->clj (json/parse (.-cloc_me js/window)))
+            repos (or (vec (get me "repos")) [])]
+        (swap! app-state (fn [state] (assoc state :repos repos)))))
 
     om/IRenderState
     (render-state [this state]  
-      (let [repos (vec (get-in state [:me "repos"]))]  
-        (prn repos)
+      (let [repo-ref (om/ref-cursor (:repos (om/root-cursor app-state)))]
         (dom/div nil
-          (om/build repo-list-view repos)
-          (om/build repo-detail-view {:repos repos
-                                      :auth (:auth state)}))))))                                       
+          (om/build repo-list-view nil)
+          (om/build repo-detail-view {:repos-ref repo-ref
+                                      :index-ref (om/ref-cursor (:current-index (om/root-cursor app-state)))                      
+                                      :auth (:auth state)}))))))
 
 (om/root widget app-state {:target (.getElementById js/document "content")})
