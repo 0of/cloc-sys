@@ -18,6 +18,9 @@
 (defn current-index-cur []
   (om/ref-cursor (:current-index (om/root-cursor app-state))))
 
+(defn registered-state-cur [index]
+  (om/ref-cursor (get (om/root-cursor app-state) [:registered-states index])))  
+
 ;; views
 (defn repo-list-view [state owner]
   (reify
@@ -34,36 +37,21 @@
 ;; {:auth - :repo -}
 (defn repo-config-panel [state owner]
   (reify
-    om/IInitState
-    (init-state [_]
-      (let [mutable (atom {:state (if 
-                                    (:registered current-repo) 
-                                    [:registered]
-                                    [:unregistered])})]
-        (merge state {:mutable mutable
-                      :state-cursor (:state (om/root-cursor mutable))})))   
-
-    om/IWillMount
-    (will-mount [_]
-      (prn "repo panel mount"))
-
-    om/IRenderState
-    (render-state [this state]
-      (prn "repo panel render")
-
-      (let [cursor (om/ref-cursor (:state-cursor state))   
-            current-state (nth (om/observe owner cursor) 0)
+    om/IRender
+    (render [this]
+      (let [index (:index state)
+            current-state (nth (om/observe owner (registered-state-cur index)) 0)
             auth-token (:auth state)
             register-repo-url (str/format "/api/user/%s/register" (get-in state [:repo "name"]))
             register-fn (fn [] 
                           (when (= current-state :unregistered)
-                            (om/update! cursor [0] :registering)  
+                            (om/update! (registered-state-cur index) [0] :registering)  
 
                             (go (let [resp (<! (http/post register-repo-url {:oauth-token auth-token
                                                                              :json-params {}}))]
                                    (if (= 200 (:status resp))
-                                     (prn resp)  
-                                     (om/update! cursor [0] :unregistered))))))]
+                                     (prn resp)
+                                     (om/update! (registered-state-cur index) [0] :unregistered))))))]      
 
         (case current-state
           :registered (dom/h2 nil (get (:repo state) "full_name"))
@@ -77,8 +65,18 @@
 ;; {:repos - :auth -}
 (defn repo-detail-view [state owner]
   (reify
+    om/IWillMount
+    (will-mount [_]
+      ;; check all registered state
+      (let [registered (mapv #(if
+                                (:registered %) 
+                                [:registered]
+                                [:unregistered])
+                          (:repos @app-state))]
+        (swap! app-state (fn [state] (assoc state :registered-states :registered)))))
+
     om/IRender
-    (render [this]  
+    (render [this]
       (let [current-index (nth (om/observe owner (current-index-cur)) 0)
             repos (:repos @app-state)]
         (if (< current-index (count repos))
@@ -100,11 +98,8 @@
 
     om/IRenderState
     (render-state [this state]  
-      (let [repo-ref (om/ref-cursor (:repos (om/root-cursor app-state)))]
-        (dom/div nil
-          (om/build repo-list-view nil)
-          (om/build repo-detail-view {:repos-ref repo-ref
-                                      :index-ref (om/ref-cursor (:current-index (om/root-cursor app-state)))                      
-                                      :auth (:auth state)}))))))
+      (dom/div nil
+        (om/build repo-list-view nil)
+        (om/build repo-detail-view {:auth (:auth state)})))))
 
 (om/root widget app-state {:target (.getElementById js/document "content")})
