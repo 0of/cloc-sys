@@ -19,7 +19,7 @@
   (om/ref-cursor (:current-index (om/root-cursor app-state))))
 
 (defn registered-state-cur [index]
-  (om/ref-cursor (get (om/root-cursor app-state) [:registered-states index])))  
+  (om/ref-cursor (get-in (om/root-cursor app-state) [:registered-states index])))  
 
 ;; views
 (defn repo-list-view [state owner]
@@ -34,32 +34,35 @@
         (apply dom/div nil
           (map-indexed repo-button (:repos @app-state)))))))  
 
+(defn- register-repo [current-index auth-token repo-name]
+  (let [register-repo-url (str/format "/api/user/%s/register" repo-name)]  
+    (om/update! (registered-state-cur current-index) [0] :registering)
+    (go (let [resp (<! (http/post register-repo-url {:oauth-token auth-token
+                                                     :json-params {}}))]
+           (if (= 200 (:status resp))
+             (let [registered-repo (:body resp)] 
+               (swap! app-state (fn [state] (assoc-in state [:repos current-index :registered] registered-repo)))
+               (om/update! (registered-state-cur current-index) [0] :registered))  
+
+             (om/update! (registered-state-cur current-index) [0] :unregistered))))))
+
 ;; {:auth - :repo -}
 (defn repo-config-panel [state owner]
   (reify
     om/IRender
     (render [this]
+      (prn (:registered-states (om/root-cursor app-state)))  
       (let [index (:index state)
             current-state (nth (om/observe owner (registered-state-cur index)) 0)
-            auth-token (:auth state)
-            register-repo-url (str/format "/api/user/%s/register" (get-in state [:repo "name"]))
-            register-fn (fn [] 
-                          (when (= current-state :unregistered)
-                            (om/update! (registered-state-cur index) [0] :registering)  
-
-                            (go (let [resp (<! (http/post register-repo-url {:oauth-token auth-token
-                                                                             :json-params {}}))]
-                                   (if (= 200 (:status resp))
-                                     (prn resp)
-                                     (om/update! (registered-state-cur index) [0] :unregistered))))))]      
-
+            current-repo (nth (:repos @app-state) index)]
         (case current-state
-          :registered (dom/h2 nil (get (:repo state) "full_name"))
+          :registered (dom/h2 nil (get current-repo "full_name"))
           :registering (dom/h2 
                           nil
                           "registering...")
           :unregistered (dom/button 
-                          #js {:onClick register-fn}
+                          #js {:onClick #(when (= current-state :unregistered)
+                                            (register-repo index (:auth state) (get current-repo "name")))}             
                           "register this repo"))))))
 
 ;; {:repos - :auth -}
@@ -73,14 +76,14 @@
                                 [:registered]
                                 [:unregistered])
                           (:repos @app-state))]
-        (swap! app-state (fn [state] (assoc state :registered-states :registered)))))
+        (swap! app-state (fn [state] (assoc state :registered-states registered)))))
 
     om/IRender
     (render [this]
       (let [current-index (nth (om/observe owner (current-index-cur)) 0)
             repos (:repos @app-state)]
         (if (< current-index (count repos))
-          (om/build repo-config-panel {:repo (nth repos current-index) 
+          (om/build repo-config-panel {:index current-index
                                        :auth (:auth state)})                              
           (dom/h2 nil "Add your repos"))))))
 
