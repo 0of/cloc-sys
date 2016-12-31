@@ -51,7 +51,6 @@
   (reify
     om/IRender
     (render [this]
-      (prn (:registered-states (om/root-cursor app-state)))  
       (let [index (:index state)
             current-state (nth (om/observe owner (registered-state-cur index)) 0)
             current-repo (nth (:repos @app-state) index)]
