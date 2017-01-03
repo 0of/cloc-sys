@@ -32,7 +32,7 @@
                          (fn [e] (om/update! (current-index-cur) [0] index))}
                   (get repo "full_name")))]
         (apply dom/div nil
-          (map-indexed repo-button (:repos @app-state)))))))  
+          (map-indexed repo-button (:repos @app-state)))))))
 
 (defn- register-repo [current-index auth-token repo-name]
   (let [register-repo-url (str/format "/api/user/%s/register" repo-name)]  
@@ -46,6 +46,14 @@
 
              (om/update! (registered-state-cur current-index) [0] :unregistered))))))
 
+(defn- unregister-repo [current-index auth-token repo-name]
+  (let [unregister-repo-url (str/format "/api/user/%s/unregister" repo-name)]  
+    (go (let [resp (<! (http/post unregister-repo-url {:oauth-token auth-token
+                                                       :json-params {}}))]
+           (when (= 200 (:status resp))
+              (swap! app-state (fn [state] (update-in state [:repos current-index] dissoc :registered)))
+              (om/update! (registered-state-cur current-index) [0] :unregistered))))))  
+  
 ;; {:auth - :repo -}
 (defn repo-config-panel [state owner]
   (reify
@@ -55,7 +63,12 @@
             current-state (nth (om/observe owner (registered-state-cur index)) 0)
             current-repo (nth (:repos @app-state) index)]
         (case current-state
-          :registered (dom/h2 nil (get current-repo "full_name"))
+          :registered (dom/div nil
+                        (dom/h2 nil (get current-repo "full_name"))
+                        (dom/button
+                          #js {:onClick #(when (= current-state :registered)
+                                            (unregister-repo index (:auth state) (get current-repo "name")))}             
+                          "unregister this repo"))
           :registering (dom/h2 
                           nil
                           "registering...")
@@ -83,7 +96,7 @@
             repos (:repos @app-state)]
         (if (< current-index (count repos))
           (om/build repo-config-panel {:index current-index
-                                       :auth (:auth state)})                              
+                                       :auth (:auth state)})
           (dom/h2 nil "Add your repos"))))))
 
 (defn widget [state owner]
