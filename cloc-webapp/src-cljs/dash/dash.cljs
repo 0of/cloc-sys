@@ -65,6 +65,20 @@
                                    (assoc-in state [:repos current-index :registered] (assoc registered :lang body))
                                    state))))))))                      
 
+(defn repo-badge-panel [state owner]
+  (reify  
+    om/IRender
+    (render [this] 
+      (dom/div nil
+        (dom/select
+          #js {:onChange (fn []
+                           (this-as this
+                             (let [opt-value (aget (.-options this) (.-selectedIndex this) "value")]
+                               (aset (om/get-node owner "badge-link") "value" opt-value))))}      
+          (dom/option #js {:value (:svg_badge_url state)} "SVG badge")
+          (dom/option #js {:value (:png_badge_url state)} "PNG badge"))    
+        (dom/textarea #js {:ref "badge-link"})))))        
+
 ;; {:auth - :repo -}
 (defn repo-config-panel [state owner]
   (reify
