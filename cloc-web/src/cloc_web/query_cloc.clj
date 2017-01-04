@@ -13,7 +13,7 @@
            [org.apache.batik.transcoder TranscoderInput TranscoderOutput]
            [org.apache.batik.transcoder.image PNGTranscoder]))
 
-(defn- get-langs
+(defn get-langs
   [id]
   (with-open [conn (r/connect :host "127.0.0.1" :port 28015 :db "cloc")]
     (-> (r/table "result")
