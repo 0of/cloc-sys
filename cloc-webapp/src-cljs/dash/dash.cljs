@@ -40,7 +40,7 @@
     (go (let [resp (<! (http/post register-repo-url {:oauth-token auth-token
                                                      :json-params {}}))]
            (if (= 200 (:status resp))
-             (let [registered-repo (:body resp)] 
+             (let [registered-repo (:body resp)]
                (swap! app-state (fn [state] (assoc-in state [:repos current-index :registered] registered-repo)))
                (om/update! (registered-state-cur current-index) [0] :registered))  
 
@@ -53,7 +53,32 @@
            (when (= 200 (:status resp))
               (swap! app-state (fn [state] (update-in state [:repos current-index] dissoc :registered)))
               (om/update! (registered-state-cur current-index) [0] :unregistered))))))  
-  
+
+(defn- save-repo [current-index auth-token repo-name body]
+  "save display language"
+  (let [save-repo-url (str/format "/api/user/%s/display_lang" repo-name)]  
+    (go (let [resp (<! (http/patch save-repo-url {:oauth-token auth-token
+                                                  :json-params {:display_lang body}}))]
+           (when (= 200 (:status resp))
+              (swap! app-state (fn [state]
+                                 (if-let [registered (get-in [:repos current-index :registered] state)]
+                                   (assoc-in state [:repos current-index :registered] (assoc registered :lang body))
+                                   state))))))))                      
+
+(defn repo-badge-panel [state owner]
+  (reify  
+    om/IRender
+    (render [this] 
+      (dom/div nil
+        (dom/select
+          #js {:onChange (fn []
+                           (this-as this
+                             (let [opt-value (aget (.-options this) (.-selectedIndex this) "value")]
+                               (aset (om/get-node owner "badge-link") "value" opt-value))))}      
+          (dom/option #js {:value (:svg_badge_url state)} "SVG badge")
+          (dom/option #js {:value (:png_badge_url state)} "PNG badge"))    
+        (dom/textarea #js {:ref "badge-link"})))))        
+
 ;; {:auth - :repo -}
 (defn repo-config-panel [state owner]
   (reify
@@ -65,10 +90,14 @@
         (case current-state
           :registered (dom/div nil
                         (dom/h2 nil (get current-repo "full_name"))
+                        (dom/input #js {:type "text" :ref "display-lang" :value (:lang current-repo)})
                         (dom/button
                           #js {:onClick #(when (= current-state :registered)
                                             (unregister-repo index (:auth state) (get current-repo "name")))}             
-                          "unregister this repo"))
+                          "unregister this repo")
+                        (dom/button
+                          #js {:onClick #(save-repo index (:auth state) (get current-repo "name") (.-value (om/get-node owner "display-lang")))}
+                          "Save"))
           :registering (dom/h2 
                           nil
                           "registering...")
