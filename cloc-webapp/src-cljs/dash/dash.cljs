@@ -69,15 +69,17 @@
   (reify  
     om/IRender
     (render [this]
-      (dom/div nil
-        (dom/select
-          #js {:onChange (fn [ev]
-                           (let [this (.-target ev)
-                                 opt-value (aget (.-options this) (.-selectedIndex this) "value")]
-                              (aset (om/get-node owner "badge-link") "value" opt-value)))}      
-          (dom/option #js {:value (get state "svg_badge_url")} "SVG badge")
-          (dom/option #js {:value (get state "png_badge_url")} "PNG badge"))    
-        (dom/textarea #js {:value (get state "svg_badge_url") :ref "badge-link"})))))        
+      (let [svg-path (get state "svg_badge_url")]  
+        (dom/div nil
+          (dom/img #js{:src svg-path})  
+          (dom/select
+            #js {:onChange (fn [ev]
+                             (let [this (.-target ev)
+                                   opt-value (aget (.-options this) (.-selectedIndex this) "value")]
+                                (aset (om/get-node owner "badge-link") "value" opt-value)))}      
+            (dom/option #js {:value svg-path} "SVG badge")
+            (dom/option #js {:value (get state "png_badge_url")} "PNG badge"))    
+          (dom/textarea #js {:value svg-path :ref "badge-link"}))))))        
 
 ;; {:auth - :repo -}
 (defn repo-config-panel [state owner]
@@ -88,7 +90,6 @@
             current-state (nth (om/observe owner (registered-state-cur index)) 0)
             current-repo (nth (:repos @app-state) index)]
 
-        (prn (get current-repo "registered"))
         (case current-state
           :registered (dom/div nil
                         (dom/h2 nil (get current-repo "full_name"))
