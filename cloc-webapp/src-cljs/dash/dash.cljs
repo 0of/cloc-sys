@@ -68,16 +68,18 @@
 (defn repo-badge-panel [state owner]
   (reify  
     om/IRender
-    (render [this] 
-      (dom/div nil
-        (dom/select
-          #js {:onChange (fn []
-                           (this-as this
-                             (let [opt-value (aget (.-options this) (.-selectedIndex this) "value")]
-                               (aset (om/get-node owner "badge-link") "value" opt-value))))}      
-          (dom/option #js {:value (:svg_badge_url state)} "SVG badge")
-          (dom/option #js {:value (:png_badge_url state)} "PNG badge"))    
-        (dom/textarea #js {:ref "badge-link"})))))        
+    (render [this]
+      (let [svg-path (get state "svg_badge_url")]  
+        (dom/div nil
+          (dom/img #js{:src svg-path})  
+          (dom/select
+            #js {:onChange (fn [ev]
+                             (let [this (.-target ev)
+                                   opt-value (aget (.-options this) (.-selectedIndex this) "value")]
+                                (aset (om/get-node owner "badge-link") "value" opt-value)))}      
+            (dom/option #js {:value svg-path} "SVG badge")
+            (dom/option #js {:value (get state "png_badge_url")} "PNG badge"))    
+          (dom/textarea #js {:value svg-path :ref "badge-link"}))))))        
 
 ;; {:auth - :repo -}
 (defn repo-config-panel [state owner]
@@ -87,9 +89,15 @@
       (let [index (:index state)
             current-state (nth (om/observe owner (registered-state-cur index)) 0)
             current-repo (nth (:repos @app-state) index)]
+
         (case current-state
           :registered (dom/div nil
                         (dom/h2 nil (get current-repo "full_name"))
+                        
+                        (if-let [result (get-in current-repo ["registered" "result"])]
+                          (om/build repo-badge-panel result)
+                          nil)
+
                         (dom/input #js {:type "text" :ref "display-lang" :value (:lang current-repo)})
                         (dom/button
                           #js {:onClick #(when (= current-state :registered)

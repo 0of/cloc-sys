@@ -109,7 +109,18 @@
                                 :user "0of"
                                 :filter "*"
                                 :lang "SUM"
-                                :result nil}}]}})
+                                :result nil}}
+                  {:url (get-repo-location "0of/rep3")
+                   :name "rep3"
+                   :full_name "0of/rep3" 
+                   :description "description"
+                   :default_branch "master"
+                   :registered {:id "0of/rep3"
+                                :user "0of"
+                                :filter "*"
+                                :lang "SUM"
+                                :result {:svg_badge_url (get-svg-badge-url "0of/rep3" "master")
+                                         :png_badge_url (get-png-badge-url "0of/rep3" "master")}}}]}})
 
 (defn is_login
   [{:keys [user] :as params}]
