@@ -3,7 +3,8 @@
   (:require [cljs.core.async :refer [put! <! >! chan timeout]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [cljs-http.client :as http])
+            [cljs-http.client :as http]
+            [goog.window :refer [open]])
   (:import [goog.net Cookies]))
 
 (enable-console-print!)
@@ -20,7 +21,9 @@
     (render-state [this state]  
       (if (:user state)
         (dom/a #js {:href "/dash"} "Dashboard")
-        (dom/a #js {:href "/login"} "Login")))
+        (dom/button
+            #js {:onClick #(open "https://github.com/login/oauth/authorize?client_id=")}   
+            "Github Login")))
 
     om/IDidMount
     (did-mount [this]
