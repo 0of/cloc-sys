@@ -40,7 +40,6 @@
   ;; main page
   (GET  "/" [] (resource-response "index.html" {:root "public"}))
   (GET  "/dash" req (render-dash req))
-  (GET  "/login" [] (resource-response "login.html" {:root "public"}))
 
   (GET "/debug" [] (debug-auth))
 

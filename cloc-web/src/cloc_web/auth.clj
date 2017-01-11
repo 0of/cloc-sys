@@ -70,7 +70,7 @@
   (fn [request]
     (if (clojure.string/starts-with? (:uri request) "/user")
       (if-let [token (:token request)]
-        (let [resp (if (= token "debug_token") {:body {:login "test-user"} :status 200}  
+        (let [resp (if (= token "debug") {:body {:login "test-user"} :status 200}  
                     (client/get "https://api.github.com/user" {:headers {"Authorization" (format "Bearer %s" token)}
                                                                :accept :json}))]
           (if (= (:status resp) 200)

@@ -12,7 +12,10 @@
                  [cljs-http "0.1.21"]
                  [clj-http "3.2.0"]
                  [cheshire "5.6.3"]]
-  :plugins [[lein-cljsbuild "1.1.4"]]
+  :plugins [[lein-cljsbuild "1.1.4"]
+            [lein-less "1.7.5"]]    
+  :less {:source-paths ["styles"]
+         :target-path "resources/public/css"}     
   :cljsbuild {:builds [{:source-paths ["src-cljs/main"]
                         :compiler {:output-to "resources/public/js/main.js"
                                    :optimizations :none
