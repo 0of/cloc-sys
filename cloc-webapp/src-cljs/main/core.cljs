@@ -24,9 +24,10 @@
           (dom/a #js {:className "navbar-brand" :href "#"} "CLOC")
 
           (dom/ul #js {:className "nav navbar-nav navbar-right"}
-            (if (:user state)
-              (dom/a #js {:href "/dash" :className "navbar-link"} "Dashboard")
-              (dom/a #js {:href "https://github.com/login/oauth/authorize?client_id=" :className "navbar-link"} "Github Login"))))))
+            (dom/li nil
+              (if (:user state)
+                (dom/a #js {:href "/dash" :className "navbar-link"} "Dashboard")
+                (dom/a #js {:href "https://github.com/login/oauth/authorize?client_id=" :className "navbar-link"} "Github Login")))))))
 
     om/IDidMount
     (did-mount [this]
