@@ -151,7 +151,14 @@
     om/IRenderState
     (render-state [this state]  
       (dom/div nil
+        (dom/nav #js {:className "navbar navbar-default navbar-static-top"}
+          (dom/div #js {:className "container-fluid"}
+            (dom/a #js {:className "navbar-brand" :href "#"} "CLOC")
+            (dom/ul #js {:className "nav navbar-nav navbar-right"}
+              (dom/li nil
+                 (dom/a #js {:href "#" :className "navbar-link"} "Logout")))))
+
         (om/build repo-list-view nil)
         (om/build repo-detail-view {:auth (:auth state)})))))
 
-(om/root widget app-state {:target (.getElementById js/document "content")})
+(om/root widget app-state {:target (.-body js/document)})

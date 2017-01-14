@@ -8,7 +8,7 @@
             [clj-http.client :as client]
             [hiccup.core :refer [html]]
             [hiccup.element :refer [javascript-tag]]
-            [hiccup.page :refer [include-js]]
+            [hiccup.page :refer [include-js include-css]]
             [cheshire.core :refer [generate-string]]
             [clojure.tools.logging :refer [info]])
   (:gen-class))
@@ -17,8 +17,9 @@
 
 (defn- template
   [self]
-  (html [:body
-            [:div {:id "content"}]
+  (html [:head
+            (include-css "https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/cosmo/bootstrap.min.css")]
+        [:body
             (include-js "http://cdn.bootcss.com/react/0.14.0-rc1/react.js")
             (include-js "dash/goog/base.js")
             (include-js "dash/js/dash.js")
