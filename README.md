@@ -20,9 +20,13 @@ scheduling pending and cancenllation requests and starting the task in container
 counting task running in container written in Nodejs and submit the result to reporter
 
 ## cloc-web
+- web core APIs
 - acquire the svg badge from counting result
 - User's repos registering and listing
 - Github OAuth callbacks.
+
+## cloc-webapp
+- web pages
 
 ## cloc-webhook
 Github commit hook and queue counting request to scheduler
