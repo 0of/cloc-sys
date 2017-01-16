@@ -27,12 +27,15 @@
     om/IRender
     (render [this]
       (letfn [(repo-button [index repo]
-                (dom/button 
-                  #js {:onClick
-                         (fn [e] (om/update! (current-index-cur) [0] index))}
-                  (get repo "full_name")))]
-        (apply dom/div nil
-          (map-indexed repo-button (:repos @app-state)))))))
+                (dom/li {:className "list-group-item"}
+                  (dom/a 
+                    #js {:onClick
+                           (fn [e] (om/update! (current-index-cur) [0] index))}
+                    (get repo "full_name"))))]
+                
+        (dom/div #js {:className "sidebar-container"}
+            (apply dom/ul #js {:className "sidebar-nav list-group"}
+              (map-indexed repo-button (:repos @app-state))))))))
 
 (defn- register-repo [current-index auth-token repo-name]
   (let [register-repo-url (str/format "/api/user/%s/register" repo-name)]  
