@@ -1,9 +1,18 @@
+.navbar {
+  margin: 0;
+}
+
+.content-wrapper {
+  padding-left: 250px;
+}
+
 .sidebar-container {
   z-index: 1000;
   position: fixed;
   left: 0px;
   width: 0;
   height: 100%;
+  padding-left: 250px;
   overflow-y: auto;
   background: #000;
 }
@@ -15,4 +24,27 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  margin-left: -250px;
+}
+
+.sidebar-nav li {
+  text-indent: 20px;
+  line-height: 40px;
+}
+
+.sidebar-nav li a {
+  display: block;
+  text-decoration: none;
+  color: #fff;
+}
+
+.sidebar-nav li a:hover {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: hand;
+}
+
+.sidebar-nav li a:active,
+.sidebar-nav li a:focus {
+  color: #42f448;
+  text-decoration: none;
 }

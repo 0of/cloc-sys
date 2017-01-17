@@ -32,10 +32,9 @@
                     #js {:onClick
                            (fn [e] (om/update! (current-index-cur) [0] index))}
                     (get repo "full_name"))))]
-                
         (dom/div #js {:className "sidebar-container"}
-            (apply dom/ul #js {:className "sidebar-nav list-group"}
-              (map-indexed repo-button (:repos @app-state))))))))
+          (apply dom/ul #js {:className "sidebar-nav list-group"}
+            (map-indexed repo-button (:repos @app-state))))))))
 
 (defn- register-repo [current-index auth-token repo-name]
   (let [register-repo-url (str/format "/api/user/%s/register" repo-name)]  
@@ -95,7 +94,7 @@
 
         (case current-state
           :registered (dom/div nil
-                        (dom/h2 nil (get current-repo "full_name"))
+                        (dom/p nil (get current-repo "full_name"))
                         
                         (if-let [result (get-in current-repo ["registered" "result"])]
                           (om/build repo-badge-panel result)
@@ -109,7 +108,7 @@
                         (dom/button
                           #js {:onClick #(save-repo index (:auth state) (get current-repo "name") (.-value (om/get-node owner "display-lang")))}
                           "Save"))
-          :registering (dom/h2 
+          :registering (dom/p 
                           nil
                           "registering...")
           :unregistered (dom/button 
@@ -134,10 +133,12 @@
     (render [this]
       (let [current-index (nth (om/observe owner (current-index-cur)) 0)
             repos (:repos @app-state)]
-        (if (< current-index (count repos))
-          (om/build repo-config-panel {:index current-index
-                                       :auth (:auth state)})
-          (dom/h2 nil "Add your repos"))))))
+        (dom/div #js {:className "center-block"}
+          (if (< current-index (count repos))
+            (om/build repo-config-panel {:index current-index
+                                         :auth (:auth state)})
+            (dom/h2 nil "Add your repos")))))))
+        
 
 (defn widget [state owner]
   (reify  
@@ -161,7 +162,8 @@
               (dom/li nil
                  (dom/a #js {:href "#" :className "navbar-link"} "Logout")))))
 
-        (om/build repo-list-view nil)
-        (om/build repo-detail-view {:auth (:auth state)})))))
+        (dom/div #js {:className "content-wrapper"}
+          (om/build repo-list-view nil)
+          (om/build repo-detail-view {:auth (:auth state)}))))))
 
 (om/root widget app-state {:target (.-body js/document)})
