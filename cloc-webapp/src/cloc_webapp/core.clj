@@ -18,7 +18,8 @@
 (defn- template
   [self]
   (html [:head
-            (include-css "https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/cosmo/bootstrap.min.css")]
+            (include-css "https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/cosmo/bootstrap.min.css"
+                         "/css/dash.css")]
         [:body
             (include-js "http://cdn.bootcss.com/react/0.14.0-rc1/react.js")
             (include-js "dash/goog/base.js")
